@@ -10,15 +10,15 @@
   android:paddingTop="@dimen/activity_vertical_margin"
   android:paddingRight="@dimen/activity_horizontal_margin"
   android:paddingBottom="@dimen/activity_vertical_margin"
-  tools:context=".ui.login.LoginActivity"
+  tools:context=".ui.transfer.TransferFragment"
   >
 
   <EditText
-    android:id="@+id/identifier"
+    android:id="@+id/recipient"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
     android:layout_marginTop="96dp"
-    android:hint="@string/prompt_identifier"
+    android:hint="@string/prompt_recipient"
     android:inputType="text"
     android:selectAllOnFocus="true"
     app:layout_constraintEnd_toEndOf="parent"
@@ -27,32 +27,32 @@
     />
 
   <EditText
-    android:id="@+id/password"
+    android:id="@+id/amount"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
-    android:hint="@string/prompt_password"
-    android:imeActionLabel="@string/action_sign_in"
+    android:hint="@string/prompt_amount"
+    android:imeActionLabel="@string/action_transfer"
     android:imeOptions="actionDone"
-    android:inputType="textPassword"
+    android:inputType="numberDecimal"
     android:selectAllOnFocus="true"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@+id/identifier"
+    app:layout_constraintTop_toBottomOf="@+id/recipient"
     />
 
   <Button
-    android:id="@+id/login"
+    android:id="@+id/transfer"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_gravity="start"
     android:layout_marginTop="16dp"
     android:layout_marginBottom="64dp"
-    android:text="@string/action_sign_in"
+    android:text="@string/action_transfer"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@+id/password"
+    app:layout_constraintTop_toBottomOf="@+id/amount"
     app:layout_constraintVertical_bias="0.2"
     />
 
@@ -65,8 +65,8 @@
     android:layout_marginBottom="64dp"
     android:visibility="gone"
     app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintEnd_toEndOf="@+id/password"
-    app:layout_constraintStart_toStartOf="@+id/password"
+    app:layout_constraintEnd_toEndOf="@+id/amount"
+    app:layout_constraintStart_toStartOf="@+id/amount"
     app:layout_constraintTop_toTopOf="parent"
     app:layout_constraintVertical_bias="0.3"
     />
