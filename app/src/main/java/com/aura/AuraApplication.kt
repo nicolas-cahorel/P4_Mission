@@ -2,8 +2,14 @@ package com.aura
 
 import android.app.Application
 
+/**
+ * Custom application class for the Aura app.
+ */
 class AuraApplication : Application() {
 
+    /**
+     * Called when the application is starting.
+     */
     override fun onCreate() {
         super.onCreate()
         // Initialize global resources here, for example:
