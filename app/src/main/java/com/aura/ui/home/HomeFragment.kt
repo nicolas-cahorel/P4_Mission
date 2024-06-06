@@ -107,8 +107,10 @@ class HomeFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.disconnect -> {
-                startActivity(Intent(requireActivity(), LoginFragment::class.java))
-                requireActivity().finish()
+                requireActivity().supportFragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, LoginFragment())
+                    .addToBackStack(null)
+                    .commit()
                 true
             }
 

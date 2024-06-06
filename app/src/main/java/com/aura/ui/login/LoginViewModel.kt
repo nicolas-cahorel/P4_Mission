@@ -31,26 +31,26 @@ class LoginViewModel : ViewModel() {
     }
 
     // StateFlow to hold the current value of the user identifier field
-    private val _identifier = MutableStateFlow("")
-    val userIdentifier: StateFlow<String> get() = _identifier
+    private val _userIdentifier = MutableStateFlow("")
+    val userIdentifier: StateFlow<String> get() = _userIdentifier
 
     // StateFlow to hold the current value of the user password field
-    private val _password = MutableStateFlow("")
-    val userPassword: StateFlow<String> get() = _password
+    private val _userPassword = MutableStateFlow("")
+    val userPassword: StateFlow<String> get() = _userPassword
 
     // StateFlow to hold the current state of the login button (enabled/disabled)
-    private val _isLoginEnabled = MutableStateFlow(false)
-    val isButtonLoginEnabled: StateFlow<Boolean> get() = _isLoginEnabled
+    private val _isButtonLoginEnabled = MutableStateFlow(false)
+    val isButtonLoginEnabled: StateFlow<Boolean> get() = _isButtonLoginEnabled
 
     init {
         // Combine the values of identifier and password fields and update the state of the login button
         viewModelScope.launch {
-            combine(_identifier, _password) { identifier, password ->
+            combine(_userIdentifier, _userPassword) { identifier, password ->
                 // Check if both identifier and password fields are not blank
                 identifier.isNotBlank() && password.isNotBlank()
             }.collect {
                 // Update the login button enabled state
-                _isLoginEnabled.value = it
+                _isButtonLoginEnabled.value = it
             }
         }
     }
@@ -60,7 +60,7 @@ class LoginViewModel : ViewModel() {
      * @param newIdentifier the new value for the identifier field.
      */
     fun onFieldUserIdentifierChanged(newIdentifier: String) {
-        _identifier.value = newIdentifier
+        _userIdentifier.value = newIdentifier
     }
 
     /**
@@ -68,7 +68,7 @@ class LoginViewModel : ViewModel() {
      * @param newPassword the new value for the password field.
      */
     fun onFieldUserPasswordChanged(newPassword: String) {
-        _password.value = newPassword
+        _userPassword.value = newPassword
     }
 
 }
