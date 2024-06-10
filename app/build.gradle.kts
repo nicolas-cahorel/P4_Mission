@@ -58,4 +58,23 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
+    // Moshi JSON Library
+    implementation("com.squareup.moshi:moshi:1.15.0")
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
+
+    // Retrofit for Network Requests
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
+    implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
+
+    // Koin Dependency Injection
+    implementation("io.insert-koin:koin-android:3.5.6")
+    implementation("io.insert-koin:koin-core:3.5.6")
+    implementation("io.insert-koin:koin-android-compat:3.5.0")
+    implementation("io.insert-koin:koin-androidx-scope:3.5.0")
+    implementation("io.insert-koin:koin-androidx-viewmodel:3.5.0")
+    implementation("io.insert-koin:koin-androidx-fragment:3.5.0")
+    implementation("io.insert-koin:koin-androidx-workmanager:3.5.0")
+    implementation("io.insert-koin:koin-androidx-navigation:3.5.0")
+    implementation("io.insert-koin:koin-androidx-compose:3.5.0") // If using Jetpack Compose
 }

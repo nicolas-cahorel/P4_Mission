@@ -68,7 +68,7 @@ class LoginFragment : Fragment() {
         binding.buttonLogin.setOnClickListener {
             val loading = binding.loading
             loading.visibility = View.VISIBLE
-            viewModel.navigateToHome()
+            viewModel.onButtonLoginClicked()
         }
 
         // Observe the navigateToHomeEvent event from the ViewModel

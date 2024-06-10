@@ -1,7 +1,9 @@
 package com.aura.ui.login
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aura.data.repository.LoginRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -13,22 +15,11 @@ import kotlinx.coroutines.launch
  * ViewModel responsible for handling user login logic.
  * Manages user input fields and the state of the login button.
  */
-class LoginViewModel : ViewModel() {
+class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel() {
 
     // Event to trigger navigation to HomeFragment
     private val _navigateToHomeEvent = MutableSharedFlow<Unit>()
     val navigateToHomeEvent: SharedFlow<Unit> get() = _navigateToHomeEvent
-
-    /**
-     * Function to navigate to the home screen.
-     * Triggers the navigation event to HomeFragment.
-     */
-    fun navigateToHome() {
-        // Emitting the navigation event to navigate to HomeFragment
-        viewModelScope.launch {
-            _navigateToHomeEvent.emit(Unit)
-        }
-    }
 
     // StateFlow to hold the current value of the user identifier field
     private val _userIdentifier = MutableStateFlow("")
@@ -71,4 +62,42 @@ class LoginViewModel : ViewModel() {
         _userPassword.value = newPassword
     }
 
+    // Function to perform login
+    fun onButtonLoginClicked() {
+        val username = _userIdentifier.value
+        val password = _userPassword.value
+        // Here you can perform network call to validate username and password
+        // If validation is successful, navigate to HomeFragment
+        viewModelScope.launch {
+            if (validateCredentials(username, password)) {
+                navigateToHome()
+            }
+        }
+    }
+
+    // Function to validate credentials
+    private suspend fun validateCredentials(username: String, password: String): Boolean {
+
+        loginRepository.fetchLoginData(username, password)
+            .collect {loginUpdate ->
+                Log.i("LoginViewModel", loginUpdate.toString())
+            }
+
+
+        // Perform network call or any other validation logic here
+        // For example, you can use a repository to handle network calls
+        // and return true if credentials are valid, false otherwise
+        return true // Dummy implementation, replace with actual logic
+    }
+
+    /**
+     * Function to navigate to the home screen.
+     * Triggers the navigation event to HomeFragment.
+     */
+    fun navigateToHome() {
+        // Emitting the navigation event to navigate to HomeFragment
+        viewModelScope.launch {
+            _navigateToHomeEvent.emit(Unit)
+        }
+    }
 }
