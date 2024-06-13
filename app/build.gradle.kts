@@ -37,6 +37,13 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    repositories {
+        //google() // Ajoutez le référentiel Google Maven si ce n'est pas déjà fait
+        //mavenCentral() // Ajoutez le référentiel Maven Central si ce n'est pas déjà fait
+        // Vous pouvez ajouter d'autres référentiels Maven ici si nécessaire
+        //maven { url = uri("https://repo.maven.apache.org/maven2/") } // Exemple d'ajout d'un référentiel personnalisé
+    }
+
 
 
 }
@@ -70,11 +77,10 @@ dependencies {
     // Koin Dependency Injection
     implementation("io.insert-koin:koin-android:3.5.6")
     implementation("io.insert-koin:koin-core:3.5.6")
-    implementation("io.insert-koin:koin-android-compat:3.5.0")
-    implementation("io.insert-koin:koin-androidx-scope:3.5.0")
-    implementation("io.insert-koin:koin-androidx-viewmodel:3.5.0")
-    implementation("io.insert-koin:koin-androidx-fragment:3.5.0")
-    implementation("io.insert-koin:koin-androidx-workmanager:3.5.0")
-    implementation("io.insert-koin:koin-androidx-navigation:3.5.0")
-    implementation("io.insert-koin:koin-androidx-compose:3.5.0") // If using Jetpack Compose
+//    implementation("io.insert-koin:koin-android-compat:3.5.0")
+//    implementation("io.insert-koin:koin-androidx-scope:3.5.0")
+//    implementation("io.insert-koin:koin-androidx-viewmodel:3.5.0")
+//    implementation("io.insert-koin:koin-androidx-fragment:3.5.0")
+//    implementation("io.insert-koin:koin-androidx-workmanager:3.5.0")
+//    implementation("io.insert-koin:koin-androidx-navigation:3.5.0")
 }

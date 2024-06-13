@@ -1,6 +1,7 @@
 package com.aura
 
 import android.app.Application
+import com.aura.di.appModule
 import com.aura.di.dataModule // Importez ici le module Koin
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
@@ -18,7 +19,7 @@ class AuraApplication : Application() {
 
         startKoin {
             androidContext(this@AuraApplication)
-            modules(dataModule)
+            modules(dataModule, appModule)
         }
 
         // Initialize global resources here, for example:

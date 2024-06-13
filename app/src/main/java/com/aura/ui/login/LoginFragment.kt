@@ -4,10 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.aura.R
 import com.aura.databinding.FragmentLoginBinding
 import com.aura.ui.home.HomeFragment
@@ -29,7 +32,7 @@ class LoginFragment : Fragment() {
     private val binding get() = _binding!!
 
     // ViewModel associated with the fragment
-    private val viewModel: LoginViewModel by viewModels()
+    private val viewModel: LoginViewModel by viewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -66,8 +69,11 @@ class LoginFragment : Fragment() {
 
         // Handle the login button click
         binding.buttonLogin.setOnClickListener {
-            val loading = binding.loading
-            loading.visibility = View.VISIBLE
+            val progressBarLoading = binding.progressBarLoading
+            progressBarLoading.visibility = View.VISIBLE
+
+            binding.buttonLogin.isEnabled = false
+
             viewModel.onButtonLoginClicked()
         }
 
@@ -79,6 +85,19 @@ class LoginFragment : Fragment() {
                 .addToBackStack(null)
                 .commit()
         }.launchIn(viewLifecycleOwner.lifecycleScope)
+
+        // Observe the errorMessage event from the ViewModel to show toast messages
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.errorMessage.collect { message ->
+                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+                    // Hide the progress bar and re-enable the login button
+                    binding.progressBarLoading.visibility = View.GONE
+                    binding.buttonLogin.isEnabled = true
+                }
+            }
+        }
+
     }
 
 

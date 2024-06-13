@@ -5,5 +5,6 @@ package com.aura.data.model
  * @property isLoginSuccessful Indicates whether the login was successful.
  */
 data class LoginResultModel(
-    val isLoginSuccessful: Boolean
+    val isLoginSuccessful: Boolean,
+    val loginStatusCode: Int
 )
