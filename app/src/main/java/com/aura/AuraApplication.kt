@@ -4,6 +4,7 @@ import android.app.Application
 import com.aura.di.appModule
 import com.aura.di.dataModule // Importez ici le module Koin
 import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
 
 /**
@@ -18,6 +19,7 @@ class AuraApplication : Application() {
         super.onCreate()
 
         startKoin {
+            androidLogger() // Active le logger Android pour Koin
             androidContext(this@AuraApplication)
             modules(dataModule, appModule)
         }

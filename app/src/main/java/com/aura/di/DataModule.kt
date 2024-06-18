@@ -1,7 +1,9 @@
 package com.aura.di
 
 import com.aura.data.network.LoginClient
+import com.aura.data.network.AccountClient
 import com.aura.data.repository.LoginRepository
+import com.aura.data.repository.AccountRepository
 import org.koin.dsl.module
 import org.koin.core.module.Module
 import retrofit2.Retrofit
@@ -35,5 +37,11 @@ val dataModule: Module = module {
         get<Retrofit>().create(LoginClient::class.java)
     }
 
+    single {
+        get<Retrofit>().create(AccountClient::class.java)
+    }
+
     single { LoginRepository(get()) }
+
+    single { AccountRepository(get()) }
 }

@@ -13,7 +13,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.aura.R
 import com.aura.databinding.FragmentLoginBinding
-import com.aura.ui.home.HomeFragment
+import com.aura.ui.account.AccountFragment
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -47,14 +47,14 @@ class LoginFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Update the ViewModel with changes in the identifier field
-        binding.FieldUserIdentifier.addTextChangedListener { text ->
+        binding.fieldUserIdentifier.addTextChangedListener { text ->
             viewModel.onFieldUserIdentifierChanged(
                 text.toString()
             )
         }
 
         // Update the ViewModel with changes in the password field
-        binding.FieldUserPassword.addTextChangedListener { text ->
+        binding.fieldUserPassword.addTextChangedListener { text ->
             viewModel.onFieldUserPasswordChanged(
                 text.toString()
             )
@@ -69,7 +69,7 @@ class LoginFragment : Fragment() {
 
         // Handle the login button click
         binding.buttonLogin.setOnClickListener {
-            val progressBarLoading = binding.progressBarLoading
+            val progressBarLoading = binding.loginProgressBarLoading
             progressBarLoading.visibility = View.VISIBLE
 
             binding.buttonLogin.isEnabled = false
@@ -78,10 +78,10 @@ class LoginFragment : Fragment() {
         }
 
         // Observe the navigateToHomeEvent event from the ViewModel
-        viewModel.navigateToHomeEvent.onEach {
+        viewModel.navigateToAccountEvent.onEach {
             // Replace the current fragment with HomeFragment
             requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, HomeFragment())
+                .replace(R.id.fragment_container, AccountFragment())
                 .addToBackStack(null)
                 .commit()
         }.launchIn(viewLifecycleOwner.lifecycleScope)
@@ -92,7 +92,7 @@ class LoginFragment : Fragment() {
                 viewModel.errorMessage.collect { message ->
                     Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
                     // Hide the progress bar and re-enable the login button
-                    binding.progressBarLoading.visibility = View.GONE
+                    binding.loginProgressBarLoading.visibility = View.GONE
                     binding.buttonLogin.isEnabled = true
                 }
             }

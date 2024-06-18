@@ -5,9 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.aura.R
 import com.aura.databinding.FragmentTransferBinding
-import com.aura.ui.home.HomeFragment
 
 /**
  * Fragment responsible for handling money transfer operations.
@@ -33,18 +31,18 @@ class TransferFragment : Fragment() {
 
         val recipient = binding.recipient
         val amount = binding.amount
-        val transfer = binding.transfer
+//        val transfer = binding.transfer
         val loading = binding.loading
 
-        transfer.setOnClickListener {
-            loading.visibility = View.VISIBLE
-
-            // Replace the current fragment with HomeFragment
-            requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, HomeFragment())
-                .addToBackStack(null)
-                .commit()
-        }
+//        transfer.setOnClickListener {
+//            loading.visibility = View.VISIBLE
+//
+//            // Replace the current fragment with HomeFragment
+//            requireActivity().supportFragmentManager.beginTransaction()
+//                .replace(R.id.fragment_container, UserAccountFragment())
+//                .addToBackStack(null)
+//                .commit()
+//        }
     }
 
     override fun onDestroyView() {

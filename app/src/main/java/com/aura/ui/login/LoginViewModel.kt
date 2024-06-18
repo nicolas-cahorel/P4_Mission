@@ -20,8 +20,8 @@ import java.net.UnknownHostException
 class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel() {
 
     // Event to trigger navigation to HomeFragment
-    private val _navigateToHomeEvent = MutableSharedFlow<Unit>()
-    val navigateToHomeEvent: SharedFlow<Unit> get() = _navigateToHomeEvent
+    private val _navigateToAccountEvent = MutableSharedFlow<Unit>()
+    val navigateToAccountEvent: SharedFlow<Unit> get() = _navigateToAccountEvent
 
     // StateFlow to hold the current value of the user identifier field
     private val _userIdentifier = MutableStateFlow("")
@@ -74,17 +74,17 @@ class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel()
      * performs a network call, and handles errors.
      */
     fun onButtonLoginClicked() {
-        val username = _userIdentifier.value
+        val userID = _userIdentifier.value
         val password = _userPassword.value
 
         // Perform network call to validate username and password and handle errors
         viewModelScope.launch {
             try {
-                val (isLoginSuccessful, loginStatusCode) = validateCredentials(username, password)
+                val (isLoginSuccessful, loginStatusCode) = validateCredentials(userID, password)
 
                 // If login is successful, navigate to HomeFragment
                 if (isLoginSuccessful) {
-                    navigateToHome()
+                    navigateToAccount()
                 } else {
 
                     // The body of API response is empty, handle HTTP status code
@@ -92,15 +92,17 @@ class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel()
 
                         // 0 indicates no API response
                         0 -> _errorMessage.emit("HTTP status code 0: no response from API")
-                        // 1 indicates that the HTTP status code of API response is null
+                        // 1 indicates that the HTTP status code of API response is null, check API response body
                         1 -> _errorMessage.emit("HTTP status code 1: API has not returned HTTP status code")
-                        // 1 indicates that the HTTP status code of API response is null
+                        // 2 unexpected error happened, check values in LoginRepository
                         2 -> _errorMessage.emit("HTTP status code 2: unexpected error")
+                        // 200 indicates that identifiers are incorrect when isLoginSuccessful = false
+                        200 -> _errorMessage.emit("HTTP status code 200: incorrect identifiers")
                         else -> {
                             when {
                                 loginStatusCode in 3..99 -> _errorMessage.emit("HTTP status code $loginStatusCode: Unknown Error")
                                 loginStatusCode in 100..199 -> _errorMessage.emit("HTTP status code $loginStatusCode: Information Error")
-                                loginStatusCode in 200..299 -> _errorMessage.emit("HTTP status code $loginStatusCode: Success Error, incorrect identifiers")
+                                loginStatusCode in 201..299 -> _errorMessage.emit("HTTP status code $loginStatusCode: Success Error")
                                 loginStatusCode in 300..399 -> _errorMessage.emit("HTTP status code $loginStatusCode: Redirection Error")
                                 loginStatusCode in 400..499 -> _errorMessage.emit("HTTP status code $loginStatusCode: Client Error")
                                 loginStatusCode in 500..599 -> _errorMessage.emit("HTTP status code $loginStatusCode: Server Error")
@@ -134,13 +136,13 @@ class LoginViewModel(private val loginRepository: LoginRepository) : ViewModel()
             } ?: Pair(false, null)
 
     /**
-     * Function to navigate to the home screen.
-     * Triggers the navigation event to HomeFragment.
+     * Function to navigate to the user's account screen.
+     * Triggers the navigation event to AccountFragment.
      */
-    private fun navigateToHome() {
-        // Emitting the navigation event to navigate to HomeFragment
+    private fun navigateToAccount() {
+        // Emitting the navigation event to navigate to UserAccountFragment
         viewModelScope.launch {
-            _navigateToHomeEvent.emit(Unit)
+            _navigateToAccountEvent.emit(Unit)
         }
     }
 }

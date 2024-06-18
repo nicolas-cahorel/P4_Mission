@@ -1,4 +1,4 @@
-package com.aura.data.response
+package com.aura.data.apiResponse
 
 import com.aura.data.model.LoginResultModel
 import com.squareup.moshi.Json
@@ -10,13 +10,13 @@ import com.squareup.moshi.JsonClass
  * @property apiResponseStatusCode The HTTP status code of the response.
  */
 @JsonClass(generateAdapter = true)
-data class ApiLoginResponse(
+data class LoginApiResponse(
     @Json(name = "granted") val apiResponseBody: Boolean,
-    @Json (name = "statusCode") val apiResponseStatusCode: Int
 ) {
     /**
-     * Converts this ApiResponse object to a UserLoginResult object.
-     * @return UserLoginResult object.
+     * Converts this LoginApiResponse object to a LoginResultModel object.
+     * @param apiResponseStatusCode The HTTP status code of the response.
+     * @return LoginResultModel object.
      */
     fun toDomainModel(apiResponseStatusCode: Int): LoginResultModel {
         return LoginResultModel(apiResponseBody, apiResponseStatusCode)

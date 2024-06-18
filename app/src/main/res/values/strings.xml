@@ -8,8 +8,10 @@
   <string name="balance">Balance :</string>
   <string name="disconnect">Déconnexion</string>
   <string name="bank_transfer">Faire un virement</string>
+  <string name="action_reload">Réessayer</string>
 
   <string name="prompt_recipient">Destinataire</string>
   <string name="prompt_amount">Montant</string>
   <string name="action_transfer">Faire le virement</string>
+    <string name="account_balance">%.2f€</string>
 </resources>
