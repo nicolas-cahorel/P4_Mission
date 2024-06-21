@@ -42,5 +42,5 @@ data class AccountsApiResponse(
 data class AccountApiResponse(
     @Json(name = "id") val apiResponseId: String,
     @Json(name = "main") val apiResponseMain: Boolean,
-    @Json(name = "amount") val apiResponseBalance: Double
+    @Json(name = "balance") val apiResponseBalance: Double
 )
