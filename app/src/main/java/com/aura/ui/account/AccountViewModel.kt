@@ -1,16 +1,18 @@
 package com.aura.ui.account
 
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aura.data.model.AccountResultModel
 import com.aura.data.repository.AccountRepository
-import com.aura.ui.login.LoginViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.UnknownHostException
 
@@ -20,10 +22,18 @@ import java.net.UnknownHostException
  * @property loginViewModel Instance of LoginViewModel to access the user identifier.
  * @property accountRepository Repository for fetching account data.
  */
-class UserAccountViewModel(
-    private val loginViewModel: LoginViewModel,
-    private val accountRepository: AccountRepository
+class AccountViewModel(
+    private val accountRepository: AccountRepository,
+    context: Context
 ) : ViewModel() {
+
+    companion object {
+        private const val PREFS_NAME = "LoginPrefs"
+        private const val KEY_USER_IDENTIFIER = "userIdentifier"
+        private const val TAG = "AccountViewModel"
+    }
+
+    private val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     // Event to trigger navigation to TransferFragment
     private val _navigateToTransferEvent = MutableSharedFlow<Unit>()
@@ -40,16 +50,32 @@ class UserAccountViewModel(
     val errorMessage: SharedFlow<String> get() = _errorMessage
 
     // Access the userIdentifier from LoginViewModel
-    private val userIdentifier: StateFlow<String> get() = loginViewModel.userIdentifier
+    private var userIdentifier: String? = null
 
     init {
         _state.value = AccountState.Loading
 
-        // Observe the userIdentifier from LoginViewModel
+        // Load userIdentifier and account data asynchronously
         viewModelScope.launch {
-            userIdentifier.collect { userIdentifier ->
-                loadAccountData(userIdentifier)
+            userIdentifier = getUserIdentifier()
+            if (userIdentifier != null) {
+                Log.d(TAG, "User identifier loaded: $userIdentifier")
+                loadAccountData(userIdentifier!!)
+            } else {
+                Log.e(TAG, "User identifier not found.")
+                _state.value = AccountState.Error("User identifier not found.")
             }
+        }
+    }
+
+    /**
+     * Suspended function to get the user identifier from SharedPreferences.
+     *
+     * @return The user identifier or null if not found.
+     */
+    private suspend fun getUserIdentifier(): String? {
+        return withContext(Dispatchers.IO) {
+            sharedPreferences.getString(KEY_USER_IDENTIFIER, null)
         }
     }
 
@@ -67,68 +93,10 @@ class UserAccountViewModel(
 
                     // Extract data from the accounts result
                     val mainAccountBalance = findMainAccountBalance(accountsResult.accounts)
-
+                    val accountStatusCode = accountsResult.accountStatusCode
 
                     // Handle the account status code
-                    when (val accountStatusCode = accountsResult.accountStatusCode) {
-
-                        // 0 indicates no API response
-                        0 -> _state.value =
-                            AccountState.Error("HTTP status code 0: no response from API")
-                        // 1 indicates that the HTTP status code of API response is null, check API response body
-                        1 -> _state.value =
-                            AccountState.Error("HTTP status code 1: API has not returned HTTP status code")
-                        // 2 unexpected error happened, check values in LoginRepository
-                        2 -> _state.value =
-                            AccountState.Error("HTTP status code 2: unexpected error")
-                        // 200 indicates success, handle display of account here
-                        200 -> if (mainAccountBalance != null) {
-                            _state.value = AccountState.Success(mainAccountBalance)
-                        } else {
-                            _state.value = AccountState.Error("Main account not found.")
-                        }
-
-                        else -> {
-                            // Handle other HTTP status codes
-                            when (accountStatusCode) {
-                                in 3..99 -> _state.value =
-                                    AccountState.Error("HTTP status code $accountStatusCode: Unknown Error")
-
-                                in 100..199 -> _state.value =
-                                    AccountState.Error(
-                                        "HTTP status code $accountStatusCode: Information Error"
-                                    )
-
-                                in 201..299 -> _state.value =
-                                    AccountState.Error(
-                                        "HTTP status code $accountStatusCode: Success Error"
-                                    )
-
-                                in 300..399 -> _state.value =
-                                    AccountState.Error(
-                                        "HTTP status code $accountStatusCode: Redirection Error"
-                                    )
-
-                                in 400..499 -> _state.value =
-                                    AccountState.Error(
-                                        "HTTP status code $accountStatusCode: Client Error"
-                                    )
-
-                                in 500..599 -> _state.value =
-                                    AccountState.Error(
-                                        "HTTP status code $accountStatusCode: Server Error"
-                                    )
-
-                                in 600..999 -> _state.value =
-                                    AccountState.Error(
-                                        "HTTP status code $accountStatusCode: Unknown Error"
-                                    )
-
-                                else -> _state.value =
-                                    AccountState.Error("Unexpected Error. Please try again.")
-                            }
-                        }
-                    }
+                    handleAccountLoadingError(accountStatusCode, mainAccountBalance)
                 }
 
             } catch (e: IOException) {
@@ -179,8 +147,35 @@ class UserAccountViewModel(
 
         // Observe the userIdentifier from LoginViewModel
         viewModelScope.launch {
-            val userId = userIdentifier.first()
-            loadAccountData(userId)
+            userIdentifier?.let { loadAccountData(it) }
         }
     }
+
+    /**
+     * Handles errors based on the account status code.
+     *
+     * @param accountStatusCode The status code returned from the account API.
+     * @param mainAccountBalance The balance of the main account if found.
+     */
+    private fun handleAccountLoadingError(accountStatusCode: Int, mainAccountBalance: Double?) {
+        when (accountStatusCode) {
+            0 -> _state.value = AccountState.Error("HTTP status code 0: no response from API")
+            1 -> _state.value = AccountState.Error("HTTP status code 1: API has not returned HTTP status code")
+            2 -> _state.value = AccountState.Error("HTTP status code 2: unexpected error")
+            200 -> if (mainAccountBalance != null) {
+                _state.value = AccountState.Success(mainAccountBalance)
+            } else {
+                _state.value = AccountState.Error("Main account not found.")
+            }
+            in 3..99 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Unknown Error")
+            in 100..199 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Information Error")
+            in 201..299 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Success Error")
+            in 300..399 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Redirection Error")
+            in 400..499 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Client Error")
+            in 500..599 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Server Error")
+            in 600..999 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Unknown Error")
+            else -> _state.value = AccountState.Error("Unexpected Error. Please try again.")
+        }
+    }
+
 }

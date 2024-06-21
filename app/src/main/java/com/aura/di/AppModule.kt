@@ -1,7 +1,7 @@
 package com.aura.di
 
 import com.aura.ui.login.LoginViewModel
-import com.aura.ui.account.UserAccountViewModel
+import com.aura.ui.account.AccountViewModel
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -17,7 +17,7 @@ val appModule = module {
     //single { UserAccountRepository(get()) }
 
     // Définir le ViewModel pour UserAccountFragment avec LoginViewModel en dépendance
-    viewModel { UserAccountViewModel(get(), get()) }
+    viewModel { AccountViewModel(get(), get()) }
 
     // Ajouter d'autres définitions de dépendances ici si nécessaire
 }

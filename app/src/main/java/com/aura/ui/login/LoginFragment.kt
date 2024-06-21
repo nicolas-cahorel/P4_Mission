@@ -10,7 +10,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import org.koin.androidx.viewmodel.ext.android.viewModel
 import com.aura.R
 import com.aura.databinding.FragmentLoginBinding
 import com.aura.ui.account.AccountFragment
@@ -18,6 +17,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 
 /**
@@ -46,58 +46,75 @@ class LoginFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Update the ViewModel with changes in the identifier field
-        binding.fieldUserIdentifier.addTextChangedListener { text ->
-            viewModel.onFieldUserIdentifierChanged(
-                text.toString()
-            )
-        }
-
-        // Update the ViewModel with changes in the password field
-        binding.fieldUserPassword.addTextChangedListener { text ->
-            viewModel.onFieldUserPasswordChanged(
-                text.toString()
-            )
-        }
-
-        // Observe the login button enabled state and update the UI
+        // Observe the state flow
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.isButtonLoginEnabled.collectLatest { isEnabled ->
-                binding.buttonLogin.isEnabled = isEnabled
-            }
-        }
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.state.collect { state ->
+                    when (state) {
+                        // Show initial state
+                        is LoginState.Initial -> {
 
-        // Handle the login button click
-        binding.buttonLogin.setOnClickListener {
-            val progressBarLoading = binding.loginProgressBarLoading
-            progressBarLoading.visibility = View.VISIBLE
+                            binding.pbLoginLoading.visibility = View.GONE
 
-            binding.buttonLogin.isEnabled = false
+                            // Update the ViewModel with changes in the identifier field
+                            binding.fieldUserIdentifier.addTextChangedListener { text ->
+                                viewModel.onFieldUserIdentifierChanged(
+                                    text.toString()
+                                )
+                            }
 
-            viewModel.onButtonLoginClicked()
-        }
+                            // Update the ViewModel with changes in the password field
+                            binding.fieldUserPassword.addTextChangedListener { text ->
+                                viewModel.onFieldUserPasswordChanged(
+                                    text.toString()
+                                )
+                            }
 
-        // Observe the navigateToHomeEvent event from the ViewModel
-        viewModel.navigateToAccountEvent.onEach {
-            // Replace the current fragment with HomeFragment
-            requireActivity().supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, AccountFragment())
-                .addToBackStack(null)
-                .commit()
-        }.launchIn(viewLifecycleOwner.lifecycleScope)
+                            // Observe the login button enabled state and update the UI
+                            viewLifecycleOwner.lifecycleScope.launch {
+                                viewModel.isButtonLoginEnabled.collectLatest { isEnabled ->
+                                    binding.buttonLogin.isEnabled = isEnabled
+                                }
+                            }
 
-        // Observe the errorMessage event from the ViewModel to show toast messages
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.errorMessage.collect { message ->
-                    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-                    // Hide the progress bar and re-enable the login button
-                    binding.loginProgressBarLoading.visibility = View.GONE
-                    binding.buttonLogin.isEnabled = true
+                            // Handle the login button click
+                            binding.buttonLogin.setOnClickListener {
+                                viewModel.onButtonLoginClicked()
+                            }
+                        }
+
+                        // Show loading state
+                        is LoginState.Loading -> {
+                            binding.pbLoginLoading.visibility = View.VISIBLE
+                            binding.buttonLogin.isEnabled = false
+                        }
+
+                        // Show success state
+                        is LoginState.Success -> {
+
+                            // Observe the navigateToHomeEvent event from the ViewModel
+                            viewModel.navigateToAccountEvent.onEach {
+                                // Replace the current fragment with HomeFragment
+                                requireActivity().supportFragmentManager.beginTransaction()
+                                    .replace(R.id.fragment_container, AccountFragment())
+                                    .addToBackStack(null)
+                                    .commit()
+                            }.launchIn(viewLifecycleOwner.lifecycleScope)
+                        }
+
+                        // Show error state
+                        is LoginState.Error -> {
+
+                            // Hide the progress bar and re-enable the login button
+                            binding.pbLoginLoading.visibility = View.GONE
+                            binding.buttonLogin.isEnabled = true
+                            Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    }
                 }
             }
         }
-
     }
 
 

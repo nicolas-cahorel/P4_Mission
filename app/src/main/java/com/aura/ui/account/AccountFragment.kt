@@ -14,7 +14,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.aura.R
 import com.aura.databinding.FragmentAccountBinding
-import com.aura.ui.login.LoginFragment
 import com.aura.ui.transfer.TransferFragment
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -36,7 +35,7 @@ class AccountFragment : Fragment() {
     /**
      * ViewModel for user account.
      */
-    private val viewModel: UserAccountViewModel by viewModel()
+    private val viewModel: AccountViewModel by viewModel()
 
     /**
      * Creates and returns the view hierarchy associated with this fragment.
@@ -146,10 +145,7 @@ class AccountFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.disconnect -> {
-                requireActivity().supportFragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, LoginFragment())
-                    .addToBackStack(null)
-                    .commit()
+                requireActivity().finishAffinity()
                 true
             }
 
