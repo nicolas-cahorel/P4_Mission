@@ -69,7 +69,7 @@ class AccountFragment : Fragment() {
                             // Show loading state
                             binding.pbAccountLoading.visibility = View.VISIBLE
                             binding.tvBalance.visibility = View.GONE
-                            binding.buttonTransfer.isEnabled = false
+                            binding.buttonNavigateToTransfer.isEnabled = false
                             binding.buttonReload.visibility = View.GONE
                         }
 
@@ -78,10 +78,10 @@ class AccountFragment : Fragment() {
                             binding.pbAccountLoading.visibility = View.GONE
                             binding.tvBalance.visibility = View.VISIBLE
                             binding.tvBalance.text = getString(R.string.account_balance, state.balance)
-                            binding.buttonTransfer.isEnabled = true
+                            binding.buttonNavigateToTransfer.isEnabled = true
 
                             // Handle the transfer button click
-                            binding.buttonTransfer.setOnClickListener {
+                            binding.buttonNavigateToTransfer.setOnClickListener {
                                 viewModel.navigateToTransfer()
 
                                 // Observe the navigateToTransferEvent event from the ViewModel

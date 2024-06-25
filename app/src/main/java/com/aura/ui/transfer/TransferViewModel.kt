@@ -1,16 +1,19 @@
-package com.aura.ui.account
+package com.aura.ui.transfer
 
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aura.data.model.AccountResultModel
-import com.aura.data.repository.AccountRepository
+import com.aura.data.repository.TransferRepository
+import com.aura.ui.login.LoginState
+import com.aura.ui.login.LoginViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -22,8 +25,8 @@ import java.net.UnknownHostException
  * @property loginViewModel Instance of LoginViewModel to access the user identifier.
  * @property accountRepository Repository for fetching account data.
  */
-class AccountViewModel(
-    private val accountRepository: AccountRepository,
+class TransferViewModel(
+    private val transferRepository: TransferRepository,
     context: Context
 ) : ViewModel() {
 
@@ -41,10 +44,10 @@ class AccountViewModel(
     val navigateToTransferEvent: SharedFlow<Unit> get() = _navigateToTransferEvent
 
     // MutableStateFlow representing the state
-    private val _state = MutableStateFlow<AccountState>(AccountState.Loading)
+    private val _state = MutableStateFlow<TransferState>(TransferState.Initial)
 
     // Expose state as StateFlow
-    val state: StateFlow<AccountState> get() = _state
+    val state: StateFlow<TransferState> get() = _state
 
     // Flow for error messages
     private val _errorMessage = MutableSharedFlow<String>()
@@ -53,21 +56,58 @@ class AccountViewModel(
     // Access the userIdentifier from LoginViewModel
     private var userIdentifier: String? = null
 
-    init {
-        _state.value = AccountState.Loading
+    // StateFlow to hold the current value of the transfer recipient field
+    private val _transferRecipient = MutableStateFlow("")
+    val transferRecipient: StateFlow<String> get() = _transferRecipient
 
-        // Load userIdentifier and account data asynchronously
+    // StateFlow to hold the current value of the transfer amount field
+    private val _transferAmount = MutableStateFlow(00.00)
+    val transferAmount: StateFlow<Double> get() = _transferAmount
+
+    // StateFlow to hold the current state of the login button (enabled/disabled)
+    private val _isButtonMakeTransferEnabled = MutableStateFlow(false)
+    val isButtonMakeTransferEnabled: StateFlow<Boolean> get() = _isButtonMakeTransferEnabled
+
+    init {
+        _state.value = TransferState.Initial
+
+        // Load userIdentifier and transfer data asynchronously
         viewModelScope.launch {
+            combine(_transferRecipient, _transferAmount) { recipient, amount ->
+                // Check if both recipient and amount fields are not blank and null
+                recipient.isNotBlank() && amount != null
+            }.collect {
+                // Update the login button enabled state
+                _isButtonMakeTransferEnabled.value = it
+            }
+
             userIdentifier = getUserIdentifier()
             if (userIdentifier != null) {
                 Log.d(TAG, "User identifier loaded: $userIdentifier")
                 loadAccountData(userIdentifier!!)
             } else {
                 Log.e(TAG, "User identifier not found.")
-                _state.value = AccountState.Error("User identifier not found.")
+                _state.value = TransferState.Error("User identifier not found.")
             }
         }
     }
+
+    /**
+     * Function to update the transfer recipient field.
+     * @param newRecipient the new value for the identifier field.
+     */
+    fun onFieldTransferRecipientChanged(newRecipient: String) {
+        _transferRecipient.value = newRecipient
+    }
+
+    /**
+     * Function to update the transfer amount field.
+     * @param newAmount the new value for the password field.
+     */
+    fun onFieldTransferAmountChanged(newAmount: Double) {
+        _transferAmount.value = newAmount
+    }
+
 
     /**
      * Suspended function to get the user identifier from SharedPreferences.
@@ -77,6 +117,44 @@ class AccountViewModel(
     private suspend fun getUserIdentifier(): String? {
         return withContext(Dispatchers.IO) {
             sharedPreferences.getString(KEY_USER_IDENTIFIER, null)
+        }
+    }
+
+    /**
+     * Function to perform tansfer.
+     * performs a network call, and handles errors.
+     */
+    fun onButtonMakeTransferClicked() {
+        _state.value = TransferState.Loading
+
+        // Perform network call to validate username and password and handle errors
+        viewModelScope.launch {
+            try {
+                val (isLoginSuccessful, loginStatusCode) = validateCredentials(_userIdentifier.value, _userPassword.value)
+
+                // If login is successful, navigate to HomeFragment
+                if (isLoginSuccessful) {
+                    sharedPreferences.edit().putString(LoginViewModel.KEY_USER_IDENTIFIER, _userIdentifier.value).apply()
+                    Log.d(LoginViewModel.TAG, "User identifier saved: ${_userIdentifier.value}")
+                    _state.value = LoginState.Success
+                    navigateToAccount()
+                } else {
+
+                    // Handle different login status codes
+                    handleLoginError(loginStatusCode)
+                }
+            } catch (e: IOException) {
+                // Handle network errors (e.g., no Internet connection)
+                _state.value =
+                    LoginState.Error("Connection error. Please check your Internet connection.")
+            } catch (e: UnknownHostException) {
+                _state.value =
+                    LoginState.Error("No Internet connection. Please check your connection.")
+            } catch (e: Exception) {
+                // Handle other types of errors
+                _state.value =
+                    LoginState.Error("An error occurred. Please try again.")
+            }
         }
     }
 
