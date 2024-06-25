@@ -18,10 +18,9 @@ sealed interface TransferState {
     data object Loading : TransferState
 
     /**
-     * Represents a success state with a balance.
-     * @property balance The balance amount of the account.
+     * Represents a success state.
      */
-    data class Success(val balance: Double) : TransferState
+    data object Success : TransferState
 
     /**
      * Represents an error state with a message.

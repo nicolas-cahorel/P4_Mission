@@ -1,8 +1,8 @@
 package com.aura.data.network
 
-import com.aura.data.apiResponse.AccountsApiResponse
+import com.aura.data.apiResponse.TransferApiResponse
 import retrofit2.Response
-import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Path
 
 /**
@@ -13,10 +13,12 @@ interface TransferClient {
     /**
      * Makes a GET request to retrieve user account information based on the provided ID.
      * @param userId The identifier associated with the user's account.
-     * @return A Retrofit [Response] wrapping an [AccountsApiResponse].
+     * @return A Retrofit [Response] wrapping an [TransferApiResponse].
      */
-    @GET("/accounts/{id}")
+    @POST("/transfer")
     suspend fun getUserAccount(
-        @Path("id") userId: String
-    ): Response<AccountsApiResponse>
+        @Path("sender") userId: String,
+        @Path("recipient") recipientId: String,
+        @Path("amount") transferAmount: Double
+    ): Response<TransferApiResponse>
 }

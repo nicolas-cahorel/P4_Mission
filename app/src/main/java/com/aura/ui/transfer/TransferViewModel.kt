@@ -7,13 +7,13 @@ import androidx.lifecycle.viewModelScope
 import com.aura.data.model.AccountResultModel
 import com.aura.data.repository.TransferRepository
 import com.aura.ui.login.LoginState
-import com.aura.ui.login.LoginViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -54,7 +54,7 @@ class TransferViewModel(
     val errorMessage: SharedFlow<String> get() = _errorMessage
 
     // Access the userIdentifier from LoginViewModel
-    private var userIdentifier: String? = null
+    private var transferSender: String = ""
 
     // StateFlow to hold the current value of the transfer recipient field
     private val _transferRecipient = MutableStateFlow("")
@@ -81,14 +81,9 @@ class TransferViewModel(
                 _isButtonMakeTransferEnabled.value = it
             }
 
-            userIdentifier = getUserIdentifier()
-            if (userIdentifier != null) {
-                Log.d(TAG, "User identifier loaded: $userIdentifier")
-                loadAccountData(userIdentifier!!)
-            } else {
-                Log.e(TAG, "User identifier not found.")
-                _state.value = TransferState.Error("User identifier not found.")
-            }
+            transferSender = getTransferSender().toString()
+            Log.d(TAG, "Transfer sender loaded: $transferSender")
+            loadAccountData(transferSender)
         }
     }
 
@@ -114,34 +109,32 @@ class TransferViewModel(
      *
      * @return The user identifier or null if not found.
      */
-    private suspend fun getUserIdentifier(): String? {
+    private suspend fun getTransferSender(): String? {
         return withContext(Dispatchers.IO) {
             sharedPreferences.getString(KEY_USER_IDENTIFIER, null)
         }
     }
 
     /**
-     * Function to perform tansfer.
+     * Function to perform transfer.
      * performs a network call, and handles errors.
      */
     fun onButtonMakeTransferClicked() {
         _state.value = TransferState.Loading
 
-        // Perform network call to validate username and password and handle errors
+        // Perform network call to validate transfer and handle errors
         viewModelScope.launch {
             try {
-                val (isLoginSuccessful, loginStatusCode) = validateCredentials(_userIdentifier.value, _userPassword.value)
+                val (isTransferSuccessful, transferStatusCode) = validateTransfer(transferSender, _transferRecipient.value, _transferAmount.value)
 
-                // If login is successful, navigate to HomeFragment
-                if (isLoginSuccessful) {
-                    sharedPreferences.edit().putString(LoginViewModel.KEY_USER_IDENTIFIER, _userIdentifier.value).apply()
-                    Log.d(LoginViewModel.TAG, "User identifier saved: ${_userIdentifier.value}")
-                    _state.value = LoginState.Success
-                    navigateToAccount()
+                // If transfer is successful, navigate to HomeFragment
+                if (isTransferSuccessful) {
+                    _state.value = TransferState.Success
+                    //navigateToAccount()
                 } else {
 
                     // Handle different login status codes
-                    handleLoginError(loginStatusCode)
+                    handleTransferError(transferStatusCode)
                 }
             } catch (e: IOException) {
                 // Handle network errors (e.g., no Internet connection)
@@ -157,6 +150,24 @@ class TransferViewModel(
             }
         }
     }
+
+    /**
+     * Validates the provided username and password by making a network call to fetch login data.
+     *
+     * This function uses the [loginRepository] to perform the network call, and processes the response to determine
+     * if the login was successful and what the status code was.
+     *
+     * @param username The username provided by the user for login.
+     * @param password The password provided by the user for login.
+     * @return A pair where the first element is a Boolean indicating whether the login was successful,
+     *         and the second element is an Integer representing the login status code. If the network call
+     *         does not return a result, the function returns a pair of (false, null).
+     */
+    private suspend fun validateTransfer(transferSender: String, transferRecipient: String, transferAmount: Double) =
+        transferRepository.fetchTransferData(transferSender, transferRecipient, transferAmount)
+            .firstOrNull()?.let { result ->
+                Pair(result.isLoginSuccessful, result.loginStatusCode)
+            } ?: Pair(false, null)
 
     /**
      * Loads account data for the given user identifier.
@@ -175,7 +186,7 @@ class TransferViewModel(
                     val accountStatusCode = accountsResult.accountStatusCode
 
                     // Handle the account status code
-                    handleAccountLoadingSuccess(accountStatusCode, mainAccountBalance)
+                    handleTransferError(accountStatusCode, mainAccountBalance)
                 }
 
             } catch (e: IOException) {
@@ -226,36 +237,30 @@ class TransferViewModel(
 
         // Observe the userIdentifier from LoginViewModel
         viewModelScope.launch {
-            userIdentifier?.let { loadAccountData(it) }
+            transferSender?.let { loadAccountData(it) }
         }
     }
 
     /**
      * Handles errors based on the account status code.
      *
-     * @param accountStatusCode The status code returned from the account API.
+     * @param transferStatusCode The status code returned from the account API.
      * @param mainAccountBalance The balance of the main account if found.
      */
-    private fun handleAccountLoadingSuccess(accountStatusCode: Int, mainAccountBalance: Double?) {
-        when (accountStatusCode) {
-            0 -> _state.value = AccountState.Error("HTTP status code 0: no response from API")
-            1 -> _state.value = AccountState.Error("HTTP status code 1: API has not returned HTTP status code")
-            2 -> _state.value = AccountState.Error("HTTP status code 2: unexpected error")
-            200 -> if (mainAccountBalance != null) {
-                _state.value = AccountState.Success(mainAccountBalance)
-                // Store main account balance in SharedPreferences
-                sharedPreferences.edit().putFloat(KEY_MAIN_ACCOUNT_BALANCE, mainAccountBalance.toFloat()).apply()
-            } else {
-                _state.value = AccountState.Error("Main account not found.")
-            }
-            in 3..99 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Unknown Error")
-            in 100..199 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Information Error")
-            in 201..299 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Success Error")
-            in 300..399 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Redirection Error")
-            in 400..499 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Client Error")
-            in 500..599 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Server Error")
-            in 600..999 -> _state.value = AccountState.Error("HTTP status code $accountStatusCode: Unknown Error")
-            else -> _state.value = AccountState.Error("Unexpected Error. Please try again.")
+    private fun handleTransferError(transferStatusCode: Int, mainAccountBalance: Double?) {
+        when (transferStatusCode) {
+            0 -> _state.value = TransferState.Error("HTTP status code 0: no response from API")
+            1 -> _state.value = TransferState.Error("HTTP status code 1: API has not returned HTTP status code")
+            2 -> _state.value = TransferState.Error("HTTP status code 2: unexpected error")
+            200 -> _state.value = TransferState.Success
+            in 3..99 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Unknown Error")
+            in 100..199 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Information Error")
+            in 201..299 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Success Error")
+            in 300..399 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Redirection Error")
+            in 400..499 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Client Error")
+            in 500..599 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Server Error")
+            in 600..999 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Unknown Error")
+            else -> _state.value = TransferState.Error("Unexpected Error. Please try again.")
         }
     }
 

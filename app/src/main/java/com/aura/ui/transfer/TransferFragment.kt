@@ -87,8 +87,8 @@ class TransferFragment : Fragment() {
 
                         // Show loading state
                         is TransferState.Loading -> {
-                            binding.pbLoginLoading.visibility = View.VISIBLE
-                            binding.buttonLogin.isEnabled = false
+                            binding.pbTransferLoading.visibility = View.VISIBLE
+                            binding.buttonMakeTransfer.isEnabled = false
                         }
 
                         // Show success state
