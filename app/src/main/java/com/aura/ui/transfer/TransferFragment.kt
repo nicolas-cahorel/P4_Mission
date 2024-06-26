@@ -13,8 +13,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.aura.R
 import com.aura.databinding.FragmentTransferBinding
 import com.aura.ui.account.AccountFragment
-import com.aura.ui.account.AccountViewModel
-import com.aura.ui.login.LoginState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -33,7 +31,7 @@ class TransferFragment : Fragment() {
     private val binding get() = _binding!!
 
     /**
-     * ViewModel for user account.
+     * ViewModel for handling transfer operations.
      */
     private val viewModel: TransferViewModel by viewModel()
 
@@ -72,14 +70,14 @@ class TransferFragment : Fragment() {
                             }
 
 
-                            // Observe the login make transfer enabled state and update the UI
+                            // Observe the make transfer button enabled state and update the UI
                             viewLifecycleOwner.lifecycleScope.launch {
                                 viewModel.isButtonMakeTransferEnabled.collectLatest { isEnabled ->
                                     binding.buttonMakeTransfer.isEnabled = isEnabled
                                 }
                             }
 
-                            // Handle the login button click
+                            // Handle the make transfer button click
                             binding.buttonMakeTransfer.setOnClickListener {
                                 viewModel.onButtonMakeTransferClicked()
                             }
@@ -94,9 +92,9 @@ class TransferFragment : Fragment() {
                         // Show success state
                         is TransferState.Success -> {
 
-                            // Observe the navigateToHomeEvent event from the ViewModel
+                            // Observe the navigateToAccountEvent from the ViewModel
                             viewModel.navigateToAccountEvent.onEach {
-                                // Replace the current fragment with HomeFragment
+                                // Replace the current fragment with AccountFragment
                                 requireActivity().supportFragmentManager.beginTransaction()
                                     .replace(R.id.fragment_container, AccountFragment())
                                     .addToBackStack(null)
@@ -107,9 +105,9 @@ class TransferFragment : Fragment() {
                         // Show error state
                         is TransferState.Error -> {
 
-                            // Hide the progress bar and re-enable the login button
-                            binding.pbLoginLoading.visibility = View.GONE
-                            binding.buttonLogin.isEnabled = true
+                            // Hide the progress bar and re-enable the make transfer button
+                            binding.pbTransferLoading.visibility = View.GONE
+                            binding.buttonMakeTransfer.isEnabled = true
                             Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT)
                                 .show()
                         }
@@ -118,7 +116,6 @@ class TransferFragment : Fragment() {
             }
         }
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()

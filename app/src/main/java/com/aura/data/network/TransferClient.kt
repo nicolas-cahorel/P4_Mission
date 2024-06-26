@@ -6,19 +6,21 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 /**
- * Retrofit interface for defining user account related API endpoints.
+ * Retrofit interface for defining transfer-related API endpoints.
  */
 interface TransferClient {
 
     /**
-     * Makes a GET request to retrieve user account information based on the provided ID.
-     * @param userId The identifier associated with the user's account.
-     * @return A Retrofit [Response] wrapping an [TransferApiResponse].
+     * Makes a POST request to initiate a transfer between accounts.
+     * @param sender The identifier of the sender's account.
+     * @param recipient The identifier of the recipient's account.
+     * @param amount The amount to be transferred.
+     * @return A Retrofit [Response] wrapping a [TransferApiResponse].
      */
     @POST("/transfer")
-    suspend fun getUserAccount(
-        @Path("sender") userId: String,
-        @Path("recipient") recipientId: String,
-        @Path("amount") transferAmount: Double
+    suspend fun postTransfer(
+        @Path("sender") sender: String,
+        @Path("recipient") recipient: String,
+        @Path("amount") amount: Double
     ): Response<TransferApiResponse>
 }

@@ -97,7 +97,7 @@ class AccountViewModel(
                     val accountStatusCode = accountsResult.accountStatusCode
 
                     // Handle the account status code
-                    handleAccountLoadingSuccess(accountStatusCode, mainAccountBalance)
+                    handleAccountState(accountStatusCode, mainAccountBalance)
                 }
 
             } catch (e: IOException) {
@@ -158,7 +158,7 @@ class AccountViewModel(
      * @param accountStatusCode The status code returned from the account API.
      * @param mainAccountBalance The balance of the main account if found.
      */
-    private fun handleAccountLoadingSuccess(accountStatusCode: Int, mainAccountBalance: Double?) {
+    private fun handleAccountState(accountStatusCode: Int, mainAccountBalance: Double?) {
         when (accountStatusCode) {
             0 -> _state.value = AccountState.Error("HTTP status code 0: no response from API")
             1 -> _state.value = AccountState.Error("HTTP status code 1: API has not returned HTTP status code")

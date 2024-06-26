@@ -4,9 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aura.data.model.AccountResultModel
 import com.aura.data.repository.TransferRepository
-import com.aura.ui.login.LoginState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,10 +18,10 @@ import java.io.IOException
 import java.net.UnknownHostException
 
 /**
- * ViewModel responsible for handling logic related to the UserAccount screen.
+ * ViewModel responsible for handling logic related to the Transfer screen.
  *
- * @property loginViewModel Instance of LoginViewModel to access the user identifier.
- * @property accountRepository Repository for fetching account data.
+ * @property transferRepository Repository for fetching transfer data.
+ * @property Context Application context for accessing SharedPreferences.
  */
 class TransferViewModel(
     private val transferRepository: TransferRepository,
@@ -33,40 +31,43 @@ class TransferViewModel(
     companion object {
         private const val PREFS_NAME = "LoginPrefs"
         private const val KEY_USER_IDENTIFIER = "userIdentifier"
-        private const val TAG = "AccountViewModel"
-        private const val KEY_MAIN_ACCOUNT_BALANCE = "mainAccountBalance" // Nouvelle clé pour le solde du compte principal
+        private const val TAG = "TransferViewModel"
+        private const val KEY_MAIN_ACCOUNT_BALANCE =
+            "mainAccountBalance" // Key for main account balance
     }
 
     private val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    // Event to trigger navigation to TransferFragment
-    private val _navigateToTransferEvent = MutableSharedFlow<Unit>()
-    val navigateToTransferEvent: SharedFlow<Unit> get() = _navigateToTransferEvent
+    // Event to trigger navigation to AccountFragment
+    private val _navigateToAccountEvent = MutableSharedFlow<Unit>()
+    val navigateToAccountEvent: SharedFlow<Unit> get() = _navigateToAccountEvent
 
     // MutableStateFlow representing the state
     private val _state = MutableStateFlow<TransferState>(TransferState.Initial)
-
-    // Expose state as StateFlow
     val state: StateFlow<TransferState> get() = _state
 
     // Flow for error messages
     private val _errorMessage = MutableSharedFlow<String>()
     val errorMessage: SharedFlow<String> get() = _errorMessage
 
-    // Access the userIdentifier from LoginViewModel
-    private var transferSender: String = ""
 
     // StateFlow to hold the current value of the transfer recipient field
     private val _transferRecipient = MutableStateFlow("")
-    val transferRecipient: StateFlow<String> get() = _transferRecipient
+    private val transferRecipient: StateFlow<String> get() = _transferRecipient
 
     // StateFlow to hold the current value of the transfer amount field
-    private val _transferAmount = MutableStateFlow(00.00)
-    val transferAmount: StateFlow<Double> get() = _transferAmount
+    private val _transferAmount = MutableStateFlow(0.0)
+    private val transferAmount: StateFlow<Double> get() = _transferAmount
 
-    // StateFlow to hold the current state of the login button (enabled/disabled)
+    // StateFlow to hold the current state of the transfer button (enabled/disabled)
     private val _isButtonMakeTransferEnabled = MutableStateFlow(false)
     val isButtonMakeTransferEnabled: StateFlow<Boolean> get() = _isButtonMakeTransferEnabled
+
+    // Access the transferSender from SharedPreferences
+    private var transferSender: String = ""
+
+    // Access the mainAccountBalance from SharedPreferences
+    private var mainAccountBalance: Double = 0.0
 
     init {
         _state.value = TransferState.Initial
@@ -83,7 +84,9 @@ class TransferViewModel(
 
             transferSender = getTransferSender().toString()
             Log.d(TAG, "Transfer sender loaded: $transferSender")
-            loadAccountData(transferSender)
+
+            mainAccountBalance = getMainAccountBalance()
+            Log.d(TAG, "Main account balance loaded: $mainAccountBalance")
         }
     }
 
@@ -105,13 +108,24 @@ class TransferViewModel(
 
 
     /**
-     * Suspended function to get the user identifier from SharedPreferences.
+     * Suspended function to get the transfer sender from SharedPreferences.
      *
-     * @return The user identifier or null if not found.
+     * @return The transfer sender or null if not found.
      */
     private suspend fun getTransferSender(): String? {
         return withContext(Dispatchers.IO) {
             sharedPreferences.getString(KEY_USER_IDENTIFIER, null)
+        }
+    }
+
+    /**
+     * Suspended function to get the main account balance from SharedPreferences.
+     *
+     * @return The main account balance or 0.0 if not found.
+     */
+    private suspend fun getMainAccountBalance(): Double {
+        return withContext(Dispatchers.IO) {
+            sharedPreferences.getFloat(KEY_MAIN_ACCOUNT_BALANCE, 0.0F).toDouble()
         }
     }
 
@@ -125,141 +139,165 @@ class TransferViewModel(
         // Perform network call to validate transfer and handle errors
         viewModelScope.launch {
             try {
-                val (isTransferSuccessful, transferStatusCode) = validateTransfer(transferSender, _transferRecipient.value, _transferAmount.value)
+                val isTransferPossible: Boolean = checkDataBeforeTransfer(
+                    transferSender,
+                    mainAccountBalance,
+                    transferRecipient.value,
+                    transferAmount.value
+                )
 
-                // If transfer is successful, navigate to HomeFragment
-                if (isTransferSuccessful) {
-                    _state.value = TransferState.Success
-                    //navigateToAccount()
-                } else {
+                if (isTransferPossible) {
+                    val (isTransferSuccessful, transferStatusCode) = makeTransfer(
+                        transferSender,
+                        transferRecipient.value,
+                        transferAmount.value
+                    )
 
-                    // Handle different login status codes
-                    handleTransferError(transferStatusCode)
+
+                    // If transfer is successful, navigate to AccountFragment
+                    if (isTransferSuccessful) {
+                        _state.value = TransferState.Success
+                        navigateToAccount()
+                    } else {
+
+                        // Handle different transfer status codes
+                        handleTransferState(transferStatusCode)
+                    }
                 }
             } catch (e: IOException) {
                 // Handle network errors (e.g., no Internet connection)
                 _state.value =
-                    LoginState.Error("Connection error. Please check your Internet connection.")
+                    TransferState.Error("Connection error. Please check your Internet connection.")
             } catch (e: UnknownHostException) {
                 _state.value =
-                    LoginState.Error("No Internet connection. Please check your connection.")
+                    TransferState.Error("No Internet connection. Please check your connection.")
             } catch (e: Exception) {
                 // Handle other types of errors
                 _state.value =
-                    LoginState.Error("An error occurred. Please try again.")
+                    TransferState.Error("An error occurred. Please try again.")
+
             }
         }
     }
 
     /**
-     * Validates the provided username and password by making a network call to fetch login data.
+     * Checks the data before performing the transfer.
      *
-     * This function uses the [loginRepository] to perform the network call, and processes the response to determine
-     * if the login was successful and what the status code was.
-     *
-     * @param username The username provided by the user for login.
-     * @param password The password provided by the user for login.
-     * @return A pair where the first element is a Boolean indicating whether the login was successful,
-     *         and the second element is an Integer representing the login status code. If the network call
-     *         does not return a result, the function returns a pair of (false, null).
+     * @param transferSender The sender of the transfer.
+     * @param mainAccountBalance The main account balance.
+     * @param transferRecipient The recipient of the transfer.
+     * @param transferAmount The amount to be transferred.
+     * @return True if the data is valid for the transfer, false otherwise.
      */
-    private suspend fun validateTransfer(transferSender: String, transferRecipient: String, transferAmount: Double) =
+    private fun checkDataBeforeTransfer(
+        transferSender: String?,
+        mainAccountBalance: Double,
+        transferRecipient: String?,
+        transferAmount: Double
+    ): Boolean {
+        if (transferSender.isNullOrEmpty()) {
+            _state.value =
+                TransferState.Error("The sender of this transfer has not been found, please try again.")
+            return false
+        }
+        if (mainAccountBalance == 0.0) {
+            _state.value =
+                TransferState.Error("The main account for this transfer has not been found or balance is null, please try again.")
+            return false
+        }
+        if (transferRecipient.isNullOrEmpty()) {
+            _state.value =
+                TransferState.Error("The recipient for this transfer has not been found, please try again.")
+            return false
+        }
+        if (transferAmount == 0.0) {
+            _state.value =
+                TransferState.Error("The amount of this transfer has not been found or is null, please try again.")
+            return false
+        }
+        if (transferAmount > mainAccountBalance) {
+            _state.value =
+                TransferState.Error("The main account balance is too low for this transfer, please try again.")
+            return false
+        }
+        if (transferSender == transferRecipient) {
+            _state.value =
+                TransferState.Error("The recipient must be different than the sender, please try again.")
+            return false
+        }
+
+        // If all checks pass, the transfer is possible
+        return true
+    }
+
+    /**
+     * Makes the transfer by calling the repository and processing the response.
+     *
+     * @param transferSender The sender of the transfer.
+     * @param transferRecipient The recipient of the transfer.
+     * @param transferAmount The amount to be transferred.
+     * @return A pair where the first element is a Boolean indicating whether the transfer was successful,
+     *         and the second element is an Integer representing the transfer status code.
+     */
+    private suspend fun makeTransfer(
+        transferSender: String,
+        transferRecipient: String,
+        transferAmount: Double
+    ) =
         transferRepository.fetchTransferData(transferSender, transferRecipient, transferAmount)
             .firstOrNull()?.let { result ->
-                Pair(result.isLoginSuccessful, result.loginStatusCode)
-            } ?: Pair(false, null)
-
-    /**
-     * Loads account data for the given user identifier.
-     *
-     * @param userIdentifier The user identifier to fetch account data for.
-     */
-    private fun loadAccountData(userIdentifier: String) {
-
-        viewModelScope.launch {
-            try {
-                // Collect the flow from the repository
-                accountRepository.fetchAccountData(userIdentifier).collect { accountsResult ->
-
-                    // Extract data from the accounts result
-                    val mainAccountBalance = findMainAccountBalance(accountsResult.accounts)
-                    val accountStatusCode = accountsResult.accountStatusCode
-
-                    // Handle the account status code
-                    handleTransferError(accountStatusCode, mainAccountBalance)
-                }
-
-            } catch (e: IOException) {
-                // Handle network errors (e.g., no Internet connection)
-                _state.value =
-                    AccountState.Error("Connection error. Please check your Internet connection.")
-            } catch (e: UnknownHostException) {
-                _state.value =
-                    AccountState.Error("No Internet connection. Please check your connection.")
-            } catch (e: Exception) {
-                // Handle other types of errors
-                _state.value = AccountState.Error("An error occurred. Please try again.")
-            }
-        }
-    }
-
-    /**
-     * Finds the balance of the main account from a list of accounts.
-     *
-     * @param accounts The list of accounts to search through.
-     * @return The balance of the main account if found, otherwise null.
-     */
-    private fun findMainAccountBalance(accounts: List<AccountResultModel>): Double? {
-        // Filter the list to get the main account and get its balance
-        val mainAccountBalance = accounts.firstOrNull { it.isAccountMain }
-
-        // Return the balance of the main account if it exists, otherwise return null
-        return mainAccountBalance?.accountBalance
-    }
+                Pair(result.isTransferSuccessful, result.transferStatusCode)
+            } ?: Pair(false, 3)
 
     /**
      * Function to navigate to the user's account screen.
-     * Triggers the navigation event to UserAccountFragment.
+     * Triggers the navigation event to AccountFragment.
      */
-    fun navigateToTransfer() {
-        // Emitting the navigation event to navigate to TransferFragment
+    private fun navigateToAccount() {
+        // Emitting the navigation event to navigate to AccountFragment
         viewModelScope.launch {
-            _navigateToTransferEvent.emit(Unit)
-
+            _navigateToAccountEvent.emit(Unit)
         }
     }
 
-    /**
-     * Reloads the account data when the reload button is clicked.
-     */
-    fun onButtonReloadClicked() {
-        _state.value = AccountState.Loading
-
-        // Observe the userIdentifier from LoginViewModel
-        viewModelScope.launch {
-            transferSender?.let { loadAccountData(it) }
-        }
-    }
 
     /**
-     * Handles errors based on the account status code.
+     * Handles errors based on the transfer status code.
      *
-     * @param transferStatusCode The status code returned from the account API.
-     * @param mainAccountBalance The balance of the main account if found.
+     * @param transferStatusCode The status code returned from the transfer API.
      */
-    private fun handleTransferError(transferStatusCode: Int, mainAccountBalance: Double?) {
+    private fun handleTransferState(transferStatusCode: Int) {
         when (transferStatusCode) {
             0 -> _state.value = TransferState.Error("HTTP status code 0: no response from API")
-            1 -> _state.value = TransferState.Error("HTTP status code 1: API has not returned HTTP status code")
+            1 -> _state.value =
+                TransferState.Error("HTTP status code 1: API has not returned HTTP status code")
+
             2 -> _state.value = TransferState.Error("HTTP status code 2: unexpected error")
+            3 -> _state.value =
+                TransferState.Error("HTTP status code 3: error in function makeTransfer")
+
             200 -> _state.value = TransferState.Success
-            in 3..99 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Unknown Error")
-            in 100..199 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Information Error")
-            in 201..299 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Success Error")
-            in 300..399 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Redirection Error")
-            in 400..499 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Client Error")
-            in 500..599 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Server Error")
-            in 600..999 -> _state.value = TransferState.Error("HTTP status code $transferStatusCode: Unknown Error")
+            in 3..99 -> _state.value =
+                TransferState.Error("HTTP status code $transferStatusCode: Unknown Error")
+
+            in 100..199 -> _state.value =
+                TransferState.Error("HTTP status code $transferStatusCode: Information Error")
+
+            in 201..299 -> _state.value =
+                TransferState.Error("HTTP status code $transferStatusCode: Success Error")
+
+            in 300..399 -> _state.value =
+                TransferState.Error("HTTP status code $transferStatusCode: Redirection Error")
+
+            in 400..499 -> _state.value =
+                TransferState.Error("HTTP status code $transferStatusCode: Client Error")
+
+            in 500..599 -> _state.value =
+                TransferState.Error("HTTP status code $transferStatusCode: Server Error")
+
+            in 600..999 -> _state.value =
+                TransferState.Error("HTTP status code $transferStatusCode: Unknown Error")
+
             else -> _state.value = TransferState.Error("Unexpected Error. Please try again.")
         }
     }

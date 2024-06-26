@@ -1,24 +1,23 @@
 package com.aura.ui.transfer
 
-import com.aura.ui.login.LoginState
 
 /**
- * Sealed interface representing the different states of the account.
+ * Sealed interface representing the different states of the transfer process.
  */
 sealed interface TransferState {
 
+    /**
+     * Represents the initial state before any transfer attempt.
+     */
     data object Initial : TransferState
 
     /**
-     * Represents a loading state during the login attempt.
-     */
-    /**
-     * Represents a loading state.
+     * Represents a loading state during the transfer attempt.
      */
     data object Loading : TransferState
 
     /**
-     * Represents a success state.
+     * Represents a success state when the transfer is successful.
      */
     data object Success : TransferState
 
