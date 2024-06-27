@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aura.data.repository.TransferRepository
+import com.aura.ui.account.AccountViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,10 +69,16 @@ class TransferViewModel(
     private var mainAccountBalance: Double = 0.0
 
     init {
-        _state.value = TransferState.Initial
+        Log.d(TAG, "init")
 
         // Load userIdentifier and transfer data asynchronously
         viewModelScope.launch {
+
+            transferSender = getTransferSender().toString()
+            Log.d(TAG, "Transfer sender loaded: $transferSender")
+            mainAccountBalance = getMainAccountBalance()
+            Log.d(TAG, "Main account balance loaded: $mainAccountBalance")
+
             combine(_transferRecipient, _transferAmount) { recipient, amount ->
                 // Check if both recipient and amount fields are not blank and null
                 recipient.isNotBlank() && amount != null
@@ -80,11 +87,7 @@ class TransferViewModel(
                 _isButtonMakeTransferEnabled.value = it
             }
 
-            transferSender = getTransferSender().toString()
-            Log.d(TAG, "Transfer sender loaded: $transferSender")
-
-            mainAccountBalance = getMainAccountBalance()
-            Log.d(TAG, "Main account balance loaded: $mainAccountBalance")
+            _state.value = TransferState.Initial
         }
     }
 

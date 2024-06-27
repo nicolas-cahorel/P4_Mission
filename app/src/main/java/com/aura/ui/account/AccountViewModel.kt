@@ -131,7 +131,7 @@ class AccountViewModel(
     fun navigateToTransfer() {
         // Emitting the navigation event to navigate to TransferFragment
         viewModelScope.launch {
-            Log.d("AccountViewModel", "Navigating to TransferFragment")
+            Log.d(TAG, "Navigating to TransferFragment")
             _navigateToTransferEvent.emit(Unit)
 
         }

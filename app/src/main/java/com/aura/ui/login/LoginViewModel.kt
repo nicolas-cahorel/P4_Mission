@@ -1,6 +1,5 @@
 package com.aura.ui.login
 
-import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -99,7 +98,7 @@ class LoginViewModel(
         // Perform network call to validate username and password and handle errors
         viewModelScope.launch {
             try {
-                val (isLoginSuccessful, loginStatusCode) = validateCredentials(_userIdentifier.value, _userPassword.value)
+                val (isLoginSuccessful, loginStatusCode) = tryToLogin(_userIdentifier.value, _userPassword.value)
 
                 // If login is successful, navigate to HomeFragment
                 if (isLoginSuccessful) {
@@ -139,7 +138,7 @@ class LoginViewModel(
      *         and the second element is an Integer representing the login status code. If the network call
      *         does not return a result, the function returns a pair of (false, null).
      */
-    private suspend fun validateCredentials(username: String, password: String) =
+    private suspend fun tryToLogin(username: String, password: String) =
         loginRepository.fetchLoginData(username, password)
             .firstOrNull()?.let { result ->
                 Pair(result.isLoginSuccessful, result.loginStatusCode)

@@ -1,6 +1,8 @@
 package com.aura.data.repository
 
 import android.util.Log
+import com.aura.data.model.LoginCredentials
+import com.aura.data.model.TransferRequestBody
 import com.aura.data.model.TransferResultModel
 import com.aura.data.network.TransferClient
 import kotlinx.coroutines.flow.Flow
@@ -26,9 +28,13 @@ class TransferRepository(private val dataService: TransferClient) {
         transferAmount: Double
     ): Flow<TransferResultModel> = flow {
 
+        // Create transfer body object
+        val transferApiBody =
+            TransferRequestBody(transferSender, transferRecipient, transferAmount)
+
         // Make the API call to get transfer data
         val transferApiResponse =
-            dataService.postTransfer(transferSender, transferRecipient, transferAmount)
+            dataService.postRequestForTransfer(transferApiBody)
 
         // Get the status code and response body from the API response
         val transferApiStatusCode = transferApiResponse.code()

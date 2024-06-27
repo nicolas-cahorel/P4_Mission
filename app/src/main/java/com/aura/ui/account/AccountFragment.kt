@@ -85,16 +85,17 @@ class AccountFragment : Fragment() {
                             // Handle the transfer button click
                             binding.buttonNavigateToTransfer.setOnClickListener {
                                 viewModel.navigateToTransfer()
-
-                                // Observe the navigateToTransferEvent event from the ViewModel
-                                viewModel.navigateToTransferEvent.onEach {
-                                    // Replace the current fragment with TransferFragment
-                                    requireActivity().supportFragmentManager.beginTransaction()
-                                        .replace(R.id.fragment_container, TransferFragment())
-                                        .addToBackStack(null)
-                                        .commit()
-                                }.launchIn(viewLifecycleOwner.lifecycleScope)
                             }
+
+                            // Observe the navigateToTransferEvent event from the ViewModel
+                            viewModel.navigateToTransferEvent.onEach {
+                                // Replace the current fragment with TransferFragment
+                                requireActivity().supportFragmentManager.beginTransaction()
+                                    .replace(R.id.fragment_container, TransferFragment())
+                                    .addToBackStack(null)
+                                    .commit()
+                            }.launchIn(viewLifecycleOwner.lifecycleScope)
+
                         }
 
                         // Show error state
