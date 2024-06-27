@@ -21,13 +21,19 @@ class LoginRepository(private val dataService: LoginClient) {
      * @return A [Flow] emitting [LoginResultModel] objects based on the API response.
      */
     fun fetchLoginData(username: String, password: String): Flow<LoginResultModel> = flow {
+
+        // Create login credentials object
         val loginApiCredentials =
-            LoginCredentials(username, password) // Use your custom Credentials class
+            LoginCredentials(username, password)
+
+        // Make login API request
         val loginApiResponse = dataService.postCredentialsForLogin(loginApiCredentials)
 
+        // Extract status code and response body from the API response
         val loginApiStatusCode = loginApiResponse.code()
         val loginApiResponseBody = loginApiResponse.body()
 
+        // Determine the LoginResultModel based on the API response
         val loginApiResult = when {
             // Case 1: Both response body and status code are not null
             loginApiResponseBody != null && loginApiStatusCode != null -> {
@@ -50,10 +56,11 @@ class LoginRepository(private val dataService: LoginClient) {
                 LoginResultModel(false, 2)
             }
         }
+        // Emit the LoginResultModel to the flow
         emit(loginApiResult)
 
     }.catch { error ->
+        // Handle any errors that occur during the flow
         Log.e("LoginRepository", error.message ?: "No exception message")
-        // You can also emit some error state or handle the error in another way
     }
 }

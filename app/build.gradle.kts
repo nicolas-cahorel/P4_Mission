@@ -37,14 +37,6 @@ android {
     buildFeatures {
         viewBinding = true
     }
-    repositories {
-        //google() // Ajoutez le référentiel Google Maven si ce n'est pas déjà fait
-        //mavenCentral() // Ajoutez le référentiel Maven Central si ce n'est pas déjà fait
-        // Vous pouvez ajouter d'autres référentiels Maven ici si nécessaire
-        //maven { url = uri("https://repo.maven.apache.org/maven2/") } // Exemple d'ajout d'un référentiel personnalisé
-    }
-
-
 
 }
 
@@ -55,13 +47,18 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.annotation:annotation:1.8.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("com.google.firebase:firebase-crashlytics-buildtools:3.0.0")
+    implementation("com.google.firebase:firebase-crashlytics-buildtools:3.0.2")
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
-    implementation("androidx.fragment:fragment-ktx:1.7.1")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.0")
+
+
+    androidTestImplementation("androidx.test.ext:junit:1.2.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.0")
+
+    implementation("androidx.fragment:fragment-ktx:1.8.0")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
@@ -77,10 +74,5 @@ dependencies {
     // Koin Dependency Injection
     implementation("io.insert-koin:koin-android:3.5.6")
     implementation("io.insert-koin:koin-core:3.5.6")
-//    implementation("io.insert-koin:koin-android-compat:3.5.0")
-//    implementation("io.insert-koin:koin-androidx-scope:3.5.0")
-//    implementation("io.insert-koin:koin-androidx-viewmodel:3.5.0")
-//    implementation("io.insert-koin:koin-androidx-fragment:3.5.0")
-//    implementation("io.insert-koin:koin-androidx-workmanager:3.5.0")
-//    implementation("io.insert-koin:koin-androidx-navigation:3.5.0")
+
 }

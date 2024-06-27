@@ -1,6 +1,7 @@
 package com.aura.ui.login
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,18 +22,15 @@ import java.net.UnknownHostException
  */
 class LoginViewModel(
     private val loginRepository: LoginRepository,
-    context: Context
+    private val sharedPreferences: SharedPreferences
 ) : ViewModel() {
 
     companion object {
-        private const val PREFS_NAME = "LoginPrefs"
         private const val KEY_USER_IDENTIFIER = "userIdentifier"
         private const val TAG = "LoginViewModel"
     }
 
-    private val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
-    //private val sharedPreferences = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
 
     // Event to trigger navigation to AccountFragment

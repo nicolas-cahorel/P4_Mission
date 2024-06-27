@@ -6,8 +6,8 @@ import com.squareup.moshi.JsonClass
 
 /**
  * Data class representing the API response for a login request.
+ *
  * @property apiResponseBody Indicates whether the login was successful.
- * @property apiResponseStatusCode The HTTP status code of the response.
  */
 @JsonClass(generateAdapter = true)
 data class LoginApiResponse(
@@ -15,6 +15,7 @@ data class LoginApiResponse(
 ) {
     /**
      * Converts this LoginApiResponse object to a LoginResultModel object.
+     *
      * @param apiResponseStatusCode The HTTP status code of the response.
      * @return LoginResultModel object.
      */

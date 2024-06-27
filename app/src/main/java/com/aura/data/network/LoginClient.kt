@@ -13,6 +13,7 @@ interface LoginClient {
 
     /**
      * Makes a POST request to the "/login" endpoint with user credentials.
+     *
      * @param credentials The user's login credentials.
      * @return A Retrofit [Response] wrapping an [LoginApiResponse].
      */

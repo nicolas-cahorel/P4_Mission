@@ -34,6 +34,13 @@ class LoginFragment : Fragment() {
     // ViewModel associated with the fragment
     private val viewModel: LoginViewModel by viewModel()
 
+    /**
+     * Creates and returns the view hierarchy associated with this fragment.
+     * @param inflater The LayoutInflater object that can be used to inflate any views in the fragment.
+     * @param container If non-null, this is the parent view that the fragment's UI should be attached to.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state as given here.
+     * @return The View for the fragment's UI, or null.
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -43,6 +50,11 @@ class LoginFragment : Fragment() {
         return binding.root
     }
 
+    /**
+     * Called when the fragment's activity has been created and the fragment's view hierarchy instantiated.
+     * @param view The View returned by [onCreateView].
+     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state as given here.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -51,9 +63,9 @@ class LoginFragment : Fragment() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
                     when (state) {
+
                         // Show initial state
                         is LoginState.Initial -> {
-
                             binding.pbLoginLoading.visibility = View.GONE
 
                             // Update the ViewModel with changes in the identifier field
@@ -91,7 +103,6 @@ class LoginFragment : Fragment() {
 
                         // Show success state
                         is LoginState.Success -> {
-
                             // Observe the navigateToHomeEvent event from the ViewModel
                             viewModel.navigateToAccountEvent.onEach {
                                 // Replace the current fragment with HomeFragment
@@ -104,7 +115,6 @@ class LoginFragment : Fragment() {
 
                         // Show error state
                         is LoginState.Error -> {
-
                             // Hide the progress bar and re-enable the login button
                             binding.pbLoginLoading.visibility = View.GONE
                             binding.buttonLogin.isEnabled = true
@@ -117,7 +127,9 @@ class LoginFragment : Fragment() {
         }
     }
 
-
+    /**
+     * Called when the view previously created by onCreateView() has been detached from the fragment.
+     */
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

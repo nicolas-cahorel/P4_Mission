@@ -12,6 +12,7 @@ interface TransferClient {
 
     /**
      * Makes a POST request to initiate a transfer between accounts.
+     *
      * @param sender The identifier of the sender's account.
      * @param recipient The identifier of the recipient's account.
      * @param amount The amount to be transferred.

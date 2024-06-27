@@ -1,6 +1,7 @@
 package com.aura.ui.transfer
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,18 +26,15 @@ import java.net.UnknownHostException
  */
 class TransferViewModel(
     private val transferRepository: TransferRepository,
-    context: Context
+    private val sharedPreferences: SharedPreferences
 ) : ViewModel() {
 
     companion object {
-        private const val PREFS_NAME = "LoginPrefs"
         private const val KEY_USER_IDENTIFIER = "userIdentifier"
         private const val TAG = "TransferViewModel"
         private const val KEY_MAIN_ACCOUNT_BALANCE =
             "mainAccountBalance" // Key for main account balance
     }
-
-    private val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     // Event to trigger navigation to AccountFragment
     private val _navigateToAccountEvent = MutableSharedFlow<Unit>()

@@ -7,6 +7,7 @@ sealed interface AccountState {
 
     /**
      * Represents a loading state.
+     * This state indicates that the account data is currently being loaded.
      */
     data object Loading : AccountState
 

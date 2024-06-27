@@ -60,24 +60,26 @@ class AccountFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Observe the state flow
+        /// Observe the state flow using lifecycleScope
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
                     when (state) {
+
+                        // Show loading state
                         is AccountState.Loading -> {
-                            // Show loading state
                             binding.pbAccountLoading.visibility = View.VISIBLE
                             binding.tvBalance.visibility = View.GONE
                             binding.buttonNavigateToTransfer.isEnabled = false
                             binding.buttonReload.visibility = View.GONE
                         }
 
+                        // Show success state
                         is AccountState.Success -> {
-                            // Show success state
                             binding.pbAccountLoading.visibility = View.GONE
                             binding.tvBalance.visibility = View.VISIBLE
-                            binding.tvBalance.text = getString(R.string.account_balance, state.balance)
+                            binding.tvBalance.text =
+                                getString(R.string.account_balance, state.balance)
                             binding.buttonNavigateToTransfer.isEnabled = true
 
                             // Handle the transfer button click
@@ -95,8 +97,8 @@ class AccountFragment : Fragment() {
                             }
                         }
 
+                        // Show error state
                         is AccountState.Error -> {
-                            // Show error state
                             binding.pbAccountLoading.visibility = View.GONE
                             binding.buttonReload.visibility = View.VISIBLE
                             binding.buttonReload.isEnabled = true
@@ -145,8 +147,8 @@ class AccountFragment : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.disconnect -> {
-                requireActivity().finishAffinity()
-                true
+                requireActivity().finishAffinity() // Close the activity and all its parent activities
+                true // Consume the menu event
             }
 
             else -> super.onOptionsItemSelected(item)
@@ -158,6 +160,6 @@ class AccountFragment : Fragment() {
      */
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
+        _binding = null // Avoid memory leaks by nullifying the binding
     }
 }

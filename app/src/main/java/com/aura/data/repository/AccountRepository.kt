@@ -28,12 +28,19 @@ class AccountRepository(private val dataService: AccountClient) {
             val accountApiStatusCode = accountApiResponse.code()
             val accountApiResponseBody = accountApiResponse.body()
 
-
+            // Determine the AccountsResultModel based on the API response
             val accountsResultModel = when {
                 // Case 1: Both response body and status code are not null
                 accountApiResponseBody != null && accountApiStatusCode != null -> {
-                    accountApiResponseBody.toDomainModel(accountApiStatusCode)
+                    AccountsResultModel(
+                        accountApiStatusCode,
+                        accountApiResponseBody.map { it.toDomainModel() }
+                    )
                 }
+
+//                accountApiResponseBody != null && accountApiStatusCode != null -> {
+//                    accountApiResponseBody.toDomainModel(accountApiStatusCode,accountApiResponseBody)
+//                }
                 // Case 2: Response body is null but status code is not null
                 accountApiResponseBody == null && accountApiStatusCode != null -> {
                     AccountsResultModel(
@@ -43,8 +50,16 @@ class AccountRepository(private val dataService: AccountClient) {
                 }
                 // Case 3: Response body is not null but status code is null
                 accountApiResponseBody != null && accountApiStatusCode == null -> {
-                    accountApiResponseBody.toDomainModel(1)
+                    AccountsResultModel(
+                        accountStatusCode = 1,
+                        accounts = accountApiResponseBody.map { it.toDomainModel() }
+                    )
                 }
+
+
+//                accountApiResponseBody != null && accountApiStatusCode == null -> {
+//                    accountApiResponseBody.toDomainModel(1,accountApiResponseBody)
+//                }
                 // Case 4: Both response body and status code are null
                 accountApiResponseBody == null && accountApiStatusCode == null -> {
                     AccountsResultModel(
@@ -60,11 +75,16 @@ class AccountRepository(private val dataService: AccountClient) {
                     )
                 }
             }
+            // Emit the AccountsResultModel to the flow
             emit(accountsResultModel)
 
 
         }.catch { error ->
+            // Handle any errors that occur during the flow
             Log.e("UserAccountRepository", error.message ?: "No exception message")
-            // You can also emit some error state or handle the error in another way
         }
+
+
+
+
 }
