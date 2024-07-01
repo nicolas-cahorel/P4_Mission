@@ -21,7 +21,8 @@ import java.net.UnknownHostException
  */
 class LoginViewModel(
     private val loginRepository: LoginRepository,
-    private val sharedPreferences: SharedPreferences
+    private val sharedPreferences: SharedPreferences,
+    private val shouldSaveToSharedPreferences: Boolean = true
 ) : ViewModel() {
 
     companion object {
@@ -102,8 +103,10 @@ class LoginViewModel(
 
                 // If login is successful, navigate to HomeFragment
                 if (isLoginSuccessful) {
-                    sharedPreferences.edit().putString(KEY_USER_IDENTIFIER, _userIdentifier.value).apply()
-                    Log.d(TAG, "User identifier saved: ${_userIdentifier.value}")
+                    if (shouldSaveToSharedPreferences) {
+                        sharedPreferences.edit().putString(KEY_USER_IDENTIFIER, _userIdentifier.value).apply()
+                        Log.d(TAG, "User identifier saved: ${_userIdentifier.value}")
+                    }
                     _state.value = LoginState.Success
                     navigateToAccount()
                 } else {
