@@ -1,7 +1,6 @@
 package com.aura.ui.login
 
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aura.data.repository.LoginRepository
@@ -27,7 +26,6 @@ class LoginViewModel(
 
     companion object {
         private const val KEY_USER_IDENTIFIER = "userIdentifier"
-        private const val TAG = "LoginViewModel"
     }
 
 
@@ -105,7 +103,6 @@ class LoginViewModel(
                 if (isLoginSuccessful) {
                     if (shouldSaveToSharedPreferences) {
                         sharedPreferences.edit().putString(KEY_USER_IDENTIFIER, _userIdentifier.value).apply()
-                        Log.d(TAG, "User identifier saved: ${_userIdentifier.value}")
                     }
                     _state.value = LoginState.Success
                     navigateToAccount()

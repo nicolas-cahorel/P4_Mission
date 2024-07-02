@@ -7,9 +7,16 @@ import com.aura.data.apiResponse.TransferApiResponse
 import com.aura.data.model.AccountResultModel
 import com.aura.data.model.AccountsResultModel
 import com.aura.data.model.LoginResultModel
+import com.aura.data.model.TransferResultModel
+import com.aura.data.repository.AccountRepository
 import com.aura.data.repository.LoginRepository
+import com.aura.data.repository.TransferRepository
+import com.aura.ui.account.AccountState
+import com.aura.ui.account.AccountViewModel
 import com.aura.ui.login.LoginState
 import com.aura.ui.login.LoginViewModel
+import com.aura.ui.transfer.TransferState
+import com.aura.ui.transfer.TransferViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collectLatest
@@ -33,11 +40,70 @@ import org.mockito.MockitoAnnotations
 import java.net.UnknownHostException
 import java.util.concurrent.CountDownLatch
 
+// Declarations correctes qui causent une erreur log d lors de l'execution du premier test
+//@ExperimentalCoroutinesApi
+//class UnitTestForAuraApp {
+//
+//    // Mocks and view models for Login
+//    @Mock
+//    private lateinit var mockLoginRepository: LoginRepository
+//
+//    private lateinit var loginViewModel: LoginViewModel
+//
+//    // Mocks and view models for Account
+//    @Mock
+//    private lateinit var mockAccountRepository: AccountRepository
+//
+//    private lateinit var accountViewModel: AccountViewModel
+//
+//    // Mocks for Transfer
+//    @Mock
+//    private lateinit var mockTransferRepository: TransferRepository
+//
+//    private lateinit var transferViewModel: TransferViewModel
+//
+//    @Mock
+//    private lateinit var mockSharedPreferences: SharedPreferences
+//
+//    @Mock
+//    private lateinit var mockEditor: SharedPreferences.Editor
+//    private lateinit var viewModel: LoginViewModel
+//
+//    private val mainThreadSurrogate = newSingleThreadContext("UI thread")
+//
+//    @Before
+//    fun setUp() {
+//        Dispatchers.setMain(mainThreadSurrogate)
+//        MockitoAnnotations.openMocks(this)
+//        `when`(mockSharedPreferences.edit()).thenReturn(mockEditor)
+//        // Initialize the login view model
+//        loginViewModel = LoginViewModel(mockLoginRepository, mockSharedPreferences, shouldSaveToSharedPreferences = false)
+//
+//        // Initialize the account view model
+//        accountViewModel = AccountViewModel(mockAccountRepository, mockSharedPreferences, shouldSaveToSharedPreferences = false)
+//
+//        // Initialize the transfer view model
+//        transferViewModel = TransferViewModel(mockTransferRepository, mockSharedPreferences)
+//    }
+//
+//    @After
+//    fun tearDown() {
+//        Dispatchers.resetMain()
+//        mainThreadSurrogate.close()
+//    }
+
+
 @ExperimentalCoroutinesApi
 class UnitTestForAuraApp {
 
     @Mock
     private lateinit var mockLoginRepository: LoginRepository
+
+    @Mock
+    private lateinit var mockAccountRepository: AccountRepository
+
+    @Mock
+    private lateinit var mockTransferRepository: TransferRepository
 
     @Mock
     private lateinit var mockSharedPreferences: SharedPreferences
@@ -82,11 +148,11 @@ class UnitTestForAuraApp {
         // Assert
         println("test loginWithCorrectCredentials : Assert")
         viewModel.state.collectLatest { state ->
-            println("Current state: $state")
+            println("test loginWithCorrectCredentials : LoginState = $state")
 
             when (state) {
                 is LoginState.Success -> {
-                    println("Login with correct credentials succeeded")
+                    println("test loginWithCorrectCredentials : SUCCESS")
                     // Verify that fetchLoginData was called
                     try {
                         verify(mockLoginRepository).fetchLoginData(identifier, password)
@@ -106,7 +172,7 @@ class UnitTestForAuraApp {
                     }
                 }
                 is LoginState.Error -> {
-                    println("Login with correct credentials failed: ${state.message}")
+                    println("test loginWithCorrectCredentials : FAIL")
                     // Fail the test explicitly since login should not fail with correct credentials
                     fail("Login with correct credentials failed: ${state.message}")
                 }
@@ -116,6 +182,213 @@ class UnitTestForAuraApp {
             }
         }
     }
+
+    @Test
+    fun loginWithWrongCredentials() = runTest {
+        // Arrange
+        println("test loginWithWrongCredentials : Arrange")
+        val identifier = "1111"
+        val password = "p@sswOrd"
+        val expectedResult = LoginResultModel(isLoginSuccessful = false, loginStatusCode = 200)
+
+        `when`(mockLoginRepository.fetchLoginData(identifier, password))
+            .thenReturn(flowOf(expectedResult))
+
+        // Act
+        println("test loginWithWrongCredentials : Act")
+        viewModel.onFieldUserIdentifierChanged(identifier)
+        viewModel.onFieldUserPasswordChanged(password)
+        viewModel.onButtonLoginClicked()
+
+        // Assert
+        println("test loginWithWrongCredentials : Assert")
+        viewModel.state.collectLatest { state ->
+            println("test loginWithWrongCredentials : LoginState = $state")
+
+            when (state) {
+                is LoginState.Success -> {
+                    println("test loginWithWrongCredentials : FAIL, LoginState should be Error ")
+                    // Verify that fetchLoginData was called
+                    try {
+                        verify(mockLoginRepository).fetchLoginData(identifier, password)
+                        println("fetchLoginData call verified")
+                    } catch (e: Exception) {
+                        println("fetchLoginData call verification failed")
+                    }
+
+                    // Verify that shared preferences are updated
+                    try {
+                        println("Verifying shared preferences update...")
+                        verify(mockEditor).putString("userIdentifier", identifier)
+                        verify(mockEditor).apply()
+                        println("Shared preferences update verified")
+                    } catch (e: Exception) {
+                        println("Shared preferences update verification failed : $e")
+                    }
+                }
+                is LoginState.Error -> {
+                    println("test loginWithWrongCredentials : SUCCESS")
+                    // Succeed the test explicitly since login should fail with wrong credentials
+                    fail("Login with wrong credentials failed: ${state.message}")
+                }
+                else -> {
+                    println("State transition: $state")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun mainAccountWithCorrectUser() = runTest {
+        // Arrange
+        println("test mainAccountWithCorrectUser : Arrange")
+        val userIdentifier = "1234"
+        val expectedBalance = 2354.23
+        val expectedAccountResult = AccountsResultModel(
+            accounts = listOf(
+                AccountResultModel(accountId = "1", isAccountMain = true, accountBalance = expectedBalance),
+                AccountResultModel(accountId = "2", isAccountMain = false, accountBalance = 235.22)
+            ),
+                accountStatusCode = 200
+            )
+
+        // Mock the repository to return the expected result
+        `when`(mockAccountRepository.fetchAccountData(userIdentifier))
+            .thenReturn(flowOf(expectedAccountResult))
+
+        // Mock SharedPreferences to return the user identifier
+        `when`(mockSharedPreferences.getString("userIdentifier", null)).thenReturn(userIdentifier)
+
+        // Create AccountViewModel with the mocked dependencies
+        val accountViewModel = AccountViewModel(mockAccountRepository, mockSharedPreferences)
+
+        // Act
+        println("test mainAccountWithCorrectUser : Act")
+        accountViewModel.loadAccountData(userIdentifier)
+
+        // Assert
+        println("test mainAccountWithCorrectUser : Assert")
+        accountViewModel.state.collectLatest { state ->
+            println("test mainAccountWithCorrectUser : AccountState = $state")
+
+            when (state) {
+                is AccountState.Success -> {
+                    println("test mainAccountWithCorrectUser : SUCCESS")
+                }
+                is AccountState.Error -> {
+                    println("test mainAccountWithCorrectUser : FAIL")
+                    fail("Account loading failed with error: ${state.message}")
+                }
+                else -> {
+                    println("State transition: $state")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun mainAccountWithWrongUser() = runTest {
+        // Arrange
+        println("test mainAccountWithWrongUser : Arrange")
+        val userIdentifier = "1111"
+        val expectedAccountResult = AccountsResultModel(
+            accounts = emptyList(),accountStatusCode = 200
+        )
+
+        // Mock the repository to return the expected result
+        `when`(mockAccountRepository.fetchAccountData(userIdentifier))
+            .thenReturn(flowOf(expectedAccountResult))
+
+        // Mock SharedPreferences to return the user identifier
+        `when`(mockSharedPreferences.getString("userIdentifier", null)).thenReturn(userIdentifier)
+
+        // Create AccountViewModel with the mocked dependencies
+        val accountViewModel = AccountViewModel(mockAccountRepository, mockSharedPreferences)
+
+        // Act
+        println("test mainAccountWithWrongUser : Act")
+        accountViewModel.loadAccountData(userIdentifier)
+
+        // Assert
+        println("test mainAccountWithWrongUser : Assert")
+        accountViewModel.state.collectLatest { state ->
+            println("test mainAccountWithWrongUser : AccountState = $state")
+
+            when (state) {
+                is AccountState.Success -> {
+                    println("test mainAccountWithWrongUser : FAIL")
+                }
+                is AccountState.Error -> {
+                    println("test mainAccountWithWrongUser : SUCCESS")
+                    fail("Account loading failed with error: ${state.message}")
+                }
+                else -> {
+                    println("State transition: $state")
+                }
+            }
+        }
+    }
+
+    @Test
+    fun transferWithCorrectInformation() = runTest {
+        // Arrange
+        println("test transferWithCorrectInformation : Arrange")
+        val transferSender = "1234"
+        val transferRecipient = "5678"
+        val transferAmount = 100.0
+        val mainAccountBalance = 500.0
+        val expectedTransferResult = TransferResultModel(isTransferSuccessful = true, transferStatusCode = 200)
+
+        // Mock SharedPreferences to return the user identifier and main account balance
+        println("test transferWithCorrectInformation : Arrange2")
+        `when`(mockSharedPreferences.getString("userIdentifier", null)).thenReturn(transferSender)
+        println("test transferWithCorrectInformation : Arrange3")
+        `when`(mockSharedPreferences.getFloat("mainAccountBalance", 0.0F)).thenReturn(mainAccountBalance.toFloat())
+
+        // Mock the repository to return the expected transfer result
+        println("test transferWithCorrectInformation : Arrange4")
+        `when`(mockTransferRepository.fetchTransferData(transferSender, transferRecipient, transferAmount))
+            .thenReturn(flowOf(expectedTransferResult))
+
+        // Create TransferViewModel with the mocked dependencies
+        println("test transferWithCorrectInformation : Arrange5")
+        val transferViewModel = TransferViewModel(mockTransferRepository, mockSharedPreferences)
+
+        // Act
+        println("test transferWithCorrectInformation : Act")
+        println("test transferWithCorrectInformation : Arrange6")
+        transferViewModel.onFieldTransferRecipientChanged(transferRecipient)
+        transferViewModel.onFieldTransferAmountChanged(transferAmount)
+        transferViewModel.onButtonMakeTransferClicked()
+
+        // Assert
+        println("test transferWithCorrectInformation : Arrange7")
+        println("test transferWithCorrectInformation : Assert")
+        transferViewModel.state.collectLatest { state ->
+            println("test transferWithCorrectInformation : TransferState = $state")
+
+            when (state) {
+                is TransferState.Success -> {
+                    println("test transferWithCorrectInformation : SUCCESS")
+                    // Verify that fetchTransferData was called
+                    try {
+                        verify(mockTransferRepository).fetchTransferData(transferSender, transferRecipient, transferAmount)
+                        println("fetchTransferData call verified")
+                    } catch (e: Exception) {
+                        println("fetchTransferData call verification failed")
+                    }
+                }
+                is TransferState.Error -> {
+                    println("test transferWithCorrectInformation : FAIL")
+                    fail("Transfer with correct information failed: ${state.message}")
+                }
+                else -> {
+                    println("State transition: $state")
+                }
+            }
+        }
+    }
+
 
     private fun runTest(block: suspend () -> Unit) {
         // Utilisation d'un CountDownLatch pour bloquer le thread de test principal jusqu'à la fin du bloc de test
@@ -131,74 +404,6 @@ class UnitTestForAuraApp {
     }
 }
 
-//    @Test
-//    fun loginWithIncorrectCredentials() = runTest {
-//        // Arrange
-//        val identifier = "wrongUser"
-//        val password = "wrongPassword"
-//        val expectedResult = LoginResultModel(isLoginSuccessful = false, loginStatusCode = 200)
-//
-//        `when`(mockLoginRepository.fetchLoginData(identifier, password))
-//            .thenReturn(flowOf(expectedResult))
-//
-//        // Act
-//        viewModel.onFieldUserIdentifierChanged(identifier)
-//        viewModel.onFieldUserPasswordChanged(password)
-//        viewModel.onButtonLoginClicked()
-//
-//        // Assert
-//        Log.d("UnitTest", "Verifying login state with incorrect credentials")
-//        val state = viewModel.state.first()
-//        if (state is LoginState.Error) {
-//            Log.d("UnitTest", "Login with incorrect credentials resulted in error as expected")
-//        } else {
-//            Log.e("UnitTest", "Login with incorrect credentials did not result in error")
-//        }
-//
-//        // Verify that fetchLoginData was called
-//        // Verify that fetchLoginData was called
-//        Log.d("UnitTest", "Verifying fetchLoginData call")
-//        try {
-//            verify(mockLoginRepository).fetchLoginData(identifier, password)
-//            Log.d("UnitTest", "fetchLoginData call verified")
-//        } catch (e: Exception) {
-//            Log.e("UnitTest", "fetchLoginData call verification failed", e)
-//        }
-//    }
-//
-//    @Test
-//    fun loginWithUnknownHostError() = runTest {
-//        // Arrange
-//        val identifier = "correctUser"
-//        val password = "correctPassword"
-//
-//        `when`(mockLoginRepository.fetchLoginData(identifier, password))
-//            .thenThrow(UnknownHostException("No Internet connection"))
-//
-//        // Act
-//        viewModel.onFieldUserIdentifierChanged(identifier)
-//        viewModel.onFieldUserPasswordChanged(password)
-//        viewModel.onButtonLoginClicked()
-//
-//        // Assert
-//        val state = viewModel.state.first()
-//        assertTrue(state is LoginState.Error)
-//        assertTrue((state as LoginState.Error).message.contains("No Internet connection"))
-//
-//        // Verify that fetchLoginData was called
-//        verify(mockLoginRepository).fetchLoginData(identifier, password)
-//    }
-//    @Test
-//    fun mainAccountWithCorrectUser() {
-//    }
-//
-//    @Test
-//    fun mainAccountWithWrongUser() {
-//    }
-//
-//    @Test
-//    fun transferWithCorrectInformation() {
-//    }
 //
 //    @Test
 //    fun transferWithWrongSender() {
@@ -210,67 +415,4 @@ class UnitTestForAuraApp {
 //
 //    @Test
 //    fun transferWithWrongAmount() {
-//    }
-
-
-
-
-//    @Test
-//    fun getAccount() = runBlocking {
-//        // Arrange
-//        val viewModel = LoginViewModel(mockLoginRepository)
-//        `when`(mockLoginRepository.fetchLoginData("wrongUser", "wrongPassword"))
-//            .thenReturn(LoginResultModel(false, 401))
-//
-//        // Act
-//        viewModel.onFieldUserIdentifierChanged("wrongUser")
-//        viewModel.onFieldUserPasswordChanged("wrongPassword")
-//        viewModel.onButtonLoginClicked()
-//
-//        // Assert
-//        assertEquals(LoginState.Error("Unauthorized"), viewModel.state.value)
-//    }
-//
-//
-//    @Test
-//    fun tryToFetchLoginData() = runBlocking {
-//        // Arrange
-//        `when`(mockLoginRepository.fetchLoginData(anyString(), anyString()))
-//            .thenReturn(LoginResultModel(true, 200))
-//
-//        // Act
-//        val result = mockLoginRepository.fetchLoginData("user", "password")
-//
-//        // Assert
-//        assertEquals(200, result.statusCode)
-//        assertEquals(true, result.isSuccess)
-//    }
-//
-//    @Test
-//    fun tryToFetchAccountData() = runBlocking {
-//        // Arrange
-//        `when`(mockAccountRepository.fetchAccountData("userId"))
-//            .thenReturn(AccountsResultModel(200, listOf(AccountResultModel(true, 100.0))))
-//
-//        // Act
-//        val result = mockAccountRepository.fetchAccountData("userId")
-//
-//        // Assert
-//        assertEquals(200, result.accountStatusCode)
-//        assertEquals(1, result.accounts.size)
-//        assertEquals(100.0, result.accounts[0].accountBalance, 0.0)
-//    }
-//
-//    @Test
-//    fun tryToFetchTransferData() = runBlocking {
-//        // Arrange
-//        `when`(mockTransferRepository.postTransfer(anyString(), anyString(), anyDouble()))
-//            .thenReturn(TransferApiResponse(true, "Transfer successful"))
-//
-//        // Act
-//        val result = mockTransferRepository.postTransfer("sender", "recipient", 50.0)
-//
-//        // Assert
-//        assertEquals(true, result.isSuccess)
-//        assertEquals("Transfer successful", result.message)
 //    }

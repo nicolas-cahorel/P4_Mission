@@ -1,7 +1,6 @@
 package com.aura.ui.account
 
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aura.data.model.AccountResultModel
@@ -24,12 +23,12 @@ import java.net.UnknownHostException
  */
 class AccountViewModel(
     private val accountRepository: AccountRepository,
-    private val sharedPreferences: SharedPreferences
+    private val sharedPreferences: SharedPreferences,
+    private val shouldSaveToSharedPreferences: Boolean = true
 ) : ViewModel() {
 
     companion object {
         private const val KEY_USER_IDENTIFIER = "userIdentifier"
-        private const val TAG = "AccountViewModel"
         private const val KEY_MAIN_ACCOUNT_BALANCE = "mainAccountBalance"
     }
 
@@ -56,10 +55,8 @@ class AccountViewModel(
         viewModelScope.launch {
             userIdentifier = getUserIdentifier()
             if (userIdentifier != null) {
-                Log.d(TAG, "User identifier loaded: $userIdentifier")
                 loadAccountData(userIdentifier!!)
             } else {
-                Log.e(TAG, "User identifier not found.")
                 _state.value = AccountState.Error("User identifier not found.")
             }
         }
@@ -81,7 +78,7 @@ class AccountViewModel(
      *
      * @param userIdentifier The user identifier to fetch account data for.
      */
-    private fun loadAccountData(userIdentifier: String) {
+    fun loadAccountData(userIdentifier: String) {
 
         viewModelScope.launch {
             try {
@@ -89,7 +86,12 @@ class AccountViewModel(
                 accountRepository.fetchAccountData(userIdentifier).collect { accountsResult ->
 
                     // Extract data from the accounts result
-                    val mainAccountBalance = findMainAccountBalance(accountsResult.accounts)
+                    val accounts = accountsResult.accounts
+                    val mainAccountBalance = if (accounts.isNotEmpty()) {
+                        findMainAccountBalance(accountsResult.accounts)
+                    } else {
+                        null // or handle appropriately if accounts being empty is unexpected
+                    }
                     val accountStatusCode = accountsResult.accountStatusCode
 
                     // Handle the account status code
@@ -131,7 +133,6 @@ class AccountViewModel(
     fun navigateToTransfer() {
         // Emitting the navigation event to navigate to TransferFragment
         viewModelScope.launch {
-            Log.d(TAG, "Navigating to TransferFragment")
             _navigateToTransferEvent.emit(Unit)
 
         }
@@ -165,8 +166,10 @@ class AccountViewModel(
             200 -> if (mainAccountBalance != null) {
                 _state.value = AccountState.Success(mainAccountBalance)
                 // Store main account balance in SharedPreferences
-                sharedPreferences.edit()
-                    .putFloat(KEY_MAIN_ACCOUNT_BALANCE, mainAccountBalance.toFloat()).apply()
+                if (shouldSaveToSharedPreferences) {
+                    sharedPreferences.edit()
+                        .putFloat(KEY_MAIN_ACCOUNT_BALANCE, mainAccountBalance.toFloat()).apply()
+                }
             } else {
                 _state.value = AccountState.Error("Main account not found.")
             }
