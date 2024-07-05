@@ -1,7 +1,6 @@
 package com.aura.data.apiResponse
 
 import com.aura.data.model.AccountResultModel
-import com.aura.data.model.AccountsResultModel
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
@@ -12,10 +11,8 @@ import com.squareup.moshi.JsonClass
  */
 @JsonClass(generateAdapter = true)
 data class AccountsApiResponse(
-    @Json(name = "accounts") val apiResponseBody: List<AccountApiResponse>,
-) {
-
-}
+    @Json(name = "accounts") val apiResponseBody: List<AccountApiResponse>
+)
 
 /**
  * Data class representing an individual user account API response.
@@ -42,34 +39,4 @@ data class AccountApiResponse(
             accountBalance = apiResponseBalance
         )
     }
-
-
-    /**
-     * Converts the API response to a domain model.
-     *
-     * @param apiResponseStatusCode The HTTP status code of the response.
-     * @return The domain model representation of the user accounts.
-     */
-//    fun toDomainModel(accountStatusCode: Int, accountApiResponse: List<AccountApiResponse>) =
-//        AccountsResultModel(accountStatusCode, accountApiResponse.map { AccountResultModel(
-//            it.apiResponseId,
-//            it.apiResponseMain,
-//            it.apiResponseBalance) })
-
-
-
-
-
-//    fun toDomainModel(apiResponseStatusCode: Int): AccountsResultModel {
-//        return AccountsResultModel(
-//            accountStatusCode = apiResponseStatusCode,
-//            accounts = apiResponseBody.map {
-//                AccountResultModel(
-//                    it.apiResponseId,
-//                    it.apiResponseMain,
-//                    it.apiResponseBalance
-//                )
-//            }
-//        )
-//    }
 }

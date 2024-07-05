@@ -15,6 +15,7 @@ class AccountRepository(private val dataService: AccountClient) {
 
     /**
      * Fetches user account data based on the provided user ID.
+     *
      * @param userId The ID associated with the user account.
      * @return A [Flow] emitting [AccountsResultModel] objects based on the API response.
      */
@@ -30,6 +31,7 @@ class AccountRepository(private val dataService: AccountClient) {
 
             // Determine the AccountsResultModel based on the API response
             val accountsResultModel = when {
+
                 // Case 1: Both response body and status code are not null
                 accountApiResponseBody != null && accountApiStatusCode != null -> {
                     AccountsResultModel(
@@ -38,9 +40,6 @@ class AccountRepository(private val dataService: AccountClient) {
                     )
                 }
 
-//                accountApiResponseBody != null && accountApiStatusCode != null -> {
-//                    accountApiResponseBody.toDomainModel(accountApiStatusCode,accountApiResponseBody)
-//                }
                 // Case 2: Response body is null but status code is not null
                 accountApiResponseBody == null && accountApiStatusCode != null -> {
                     AccountsResultModel(
@@ -48,6 +47,7 @@ class AccountRepository(private val dataService: AccountClient) {
                         accounts = emptyList()
                     )
                 }
+
                 // Case 3: Response body is not null but status code is null
                 accountApiResponseBody != null && accountApiStatusCode == null -> {
                     AccountsResultModel(
@@ -56,10 +56,6 @@ class AccountRepository(private val dataService: AccountClient) {
                     )
                 }
 
-
-//                accountApiResponseBody != null && accountApiStatusCode == null -> {
-//                    accountApiResponseBody.toDomainModel(1,accountApiResponseBody)
-//                }
                 // Case 4: Both response body and status code are null
                 accountApiResponseBody == null && accountApiStatusCode == null -> {
                     AccountsResultModel(
@@ -67,6 +63,7 @@ class AccountRepository(private val dataService: AccountClient) {
                         accounts = emptyList()
                     )
                 }
+
                 // Fallback case to handle unexpected scenarios
                 else -> {
                     AccountsResultModel(
@@ -75,16 +72,12 @@ class AccountRepository(private val dataService: AccountClient) {
                     )
                 }
             }
+
             // Emit the AccountsResultModel to the flow
             emit(accountsResultModel)
-
 
         }.catch { error ->
             // Handle any errors that occur during the flow
             Log.e("UserAccountRepository", error.message ?: "No exception message")
         }
-
-
-
-
 }

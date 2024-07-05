@@ -11,7 +11,7 @@ import com.squareup.moshi.JsonClass
  */
 @JsonClass(generateAdapter = true)
 data class LoginApiResponse(
-    @Json(name = "granted") val apiResponseBody: Boolean,
+    @Json(name = "granted") val apiResponseBody: Boolean
 ) {
     /**
      * Converts this LoginApiResponse object to a LoginResultModel object.

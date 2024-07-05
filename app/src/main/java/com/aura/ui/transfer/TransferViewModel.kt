@@ -2,11 +2,9 @@ package com.aura.ui.transfer
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aura.data.repository.TransferRepository
-import com.aura.ui.account.AccountViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,7 +30,6 @@ class TransferViewModel(
 
     companion object {
         private const val KEY_USER_IDENTIFIER = "userIdentifier"
-        private const val TAG = "TransferViewModel"
         private const val KEY_MAIN_ACCOUNT_BALANCE =
             "mainAccountBalance" // Key for main account balance
     }
@@ -63,21 +60,18 @@ class TransferViewModel(
     val isButtonMakeTransferEnabled: StateFlow<Boolean> get() = _isButtonMakeTransferEnabled
 
     // Access the transferSender from SharedPreferences
-    private var transferSender: String = ""
+    var transferSender: String = ""
 
     // Access the mainAccountBalance from SharedPreferences
-    private var mainAccountBalance: Double = 0.0
+    var mainAccountBalance: Double = 0.0
 
     init {
-        Log.d(TAG, "init")
 
         // Load userIdentifier and transfer data asynchronously
         viewModelScope.launch {
 
             transferSender = getTransferSender().toString()
-            Log.d(TAG, "Transfer sender loaded: $transferSender")
             mainAccountBalance = getMainAccountBalance()
-            Log.d(TAG, "Main account balance loaded: $mainAccountBalance")
 
             combine(_transferRecipient, _transferAmount) { recipient, amount ->
                 // Check if both recipient and amount fields are not blank and null
@@ -110,7 +104,6 @@ class TransferViewModel(
 
     /**
      * Suspended function to get the transfer sender from SharedPreferences.
-     *
      * @return The transfer sender or null if not found.
      */
     private suspend fun getTransferSender(): String? {
@@ -121,7 +114,6 @@ class TransferViewModel(
 
     /**
      * Suspended function to get the main account balance from SharedPreferences.
-     *
      * @return The main account balance or 0.0 if not found.
      */
     private suspend fun getMainAccountBalance(): Double {
@@ -264,7 +256,6 @@ class TransferViewModel(
 
     /**
      * Handles errors based on the transfer status code.
-     *
      * @param transferStatusCode The status code returned from the transfer API.
      */
     private fun handleTransferState(transferStatusCode: Int) {
@@ -302,5 +293,4 @@ class TransferViewModel(
             else -> _state.value = TransferState.Error("Unexpected Error. Please try again.")
         }
     }
-
 }

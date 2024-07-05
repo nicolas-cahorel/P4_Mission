@@ -22,6 +22,7 @@ sealed interface LoginState {
 
     /**
      * Represents an error state with a message describing the failure.
+     *
      * @property message The error message describing why the login attempt failed.
      */
     data class Error(val message: String) : LoginState

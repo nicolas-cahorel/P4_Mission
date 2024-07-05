@@ -17,18 +17,18 @@ import java.net.UnknownHostException
 /**
  * ViewModel responsible for handling user login logic.
  * Manages user input fields and the state of the login button.
+ *
+ * @property loginRepository Repository for handling login operations.
+ * @property sharedPreferences SharedPreferences for storing user data.
  */
 class LoginViewModel(
     private val loginRepository: LoginRepository,
-    private val sharedPreferences: SharedPreferences,
-    private val shouldSaveToSharedPreferences: Boolean = true
+    private val sharedPreferences: SharedPreferences
 ) : ViewModel() {
 
     companion object {
         private const val KEY_USER_IDENTIFIER = "userIdentifier"
     }
-
-
 
 
     // Event to trigger navigation to AccountFragment
@@ -72,7 +72,8 @@ class LoginViewModel(
 
     /**
      * Function to update the identifier field.
-     * @param newIdentifier the new value for the identifier field.
+     *
+     * @param newIdentifier The new value for the identifier field.
      */
     fun onFieldUserIdentifierChanged(newIdentifier: String) {
         _userIdentifier.value = newIdentifier
@@ -80,7 +81,8 @@ class LoginViewModel(
 
     /**
      * Function to update the password field.
-     * @param newPassword the new value for the password field.
+     *
+     * @param newPassword The new value for the password field.
      */
     fun onFieldUserPasswordChanged(newPassword: String) {
         _userPassword.value = newPassword
@@ -97,13 +99,15 @@ class LoginViewModel(
         // Perform network call to validate username and password and handle errors
         viewModelScope.launch {
             try {
-                val (isLoginSuccessful, loginStatusCode) = tryToLogin(_userIdentifier.value, _userPassword.value)
+                val (isLoginSuccessful, loginStatusCode) = tryToLogin(
+                    _userIdentifier.value,
+                    _userPassword.value
+                )
 
                 // If login is successful, navigate to HomeFragment
                 if (isLoginSuccessful) {
-                    if (shouldSaveToSharedPreferences) {
-                        sharedPreferences.edit().putString(KEY_USER_IDENTIFIER, _userIdentifier.value).apply()
-                    }
+                    sharedPreferences.edit().putString(KEY_USER_IDENTIFIER, _userIdentifier.value)
+                        .apply()
                     _state.value = LoginState.Success
                     navigateToAccount()
                 } else {
@@ -157,6 +161,7 @@ class LoginViewModel(
 
     /**
      * Handles different login status codes and updates the state with appropriate error messages.
+     *
      * @param loginStatusCode The status code received from the login attempt.
      */
     private fun handleLoginError(loginStatusCode: Int?) {
@@ -176,5 +181,4 @@ class LoginViewModel(
         }
         _state.value = LoginState.Error(errorMessage)
     }
-
 }

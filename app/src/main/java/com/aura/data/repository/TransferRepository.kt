@@ -1,7 +1,6 @@
 package com.aura.data.repository
 
 import android.util.Log
-import com.aura.data.model.LoginCredentials
 import com.aura.data.model.TransferRequestBody
 import com.aura.data.model.TransferResultModel
 import com.aura.data.network.TransferClient
@@ -17,6 +16,7 @@ class TransferRepository(private val dataService: TransferClient) {
 
     /**
      * Fetches transfer data based on the provided sender, recipient, and amount.
+     *
      * @param transferSender The sender of the transfer.
      * @param transferRecipient The recipient of the transfer.
      * @param transferAmount The amount to be transferred.
@@ -42,27 +42,33 @@ class TransferRepository(private val dataService: TransferClient) {
 
         // Determine the transfer result based on the response body and status code
         val transferApiResult = when {
+
             // Case 1: Both response body and status code are not null
             transferApiResponseBody != null && transferApiStatusCode != null -> {
                 transferApiResponseBody.toDomainModel(transferApiStatusCode)
             }
+
             // Case 2: Response body is null but status code is not null
             transferApiResponseBody == null && transferApiStatusCode != null -> {
                 TransferResultModel(false, transferApiStatusCode)
             }
+
             // Case 3: Response body is not null but status code is null
             transferApiResponseBody != null && transferApiStatusCode == null -> {
                 transferApiResponseBody.toDomainModel(1)
             }
+
             // Case 4: Both response body and status code are null
             transferApiResponseBody == null && transferApiStatusCode == null -> {
                 TransferResultModel(false, 0)
             }
+
             // Fallback case to handle unexpected scenarios
             else -> {
                 TransferResultModel(false, 2)
             }
         }
+
         // Emit the transfer result
         emit(transferApiResult)
 

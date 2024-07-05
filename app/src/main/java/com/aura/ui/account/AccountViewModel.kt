@@ -16,7 +16,11 @@ import java.io.IOException
 import java.net.UnknownHostException
 
 /**
- * ViewModel responsible for handling logic related to the UserAccount screen.
+ * ViewModel responsible for handling logic related to the User Account screen.
+ *
+ * This ViewModel interacts with [AccountRepository] to fetch account data based on
+ * the user identifier stored in [SharedPreferences]. It manages the UI state using
+ * [MutableStateFlow] and broadcasts error messages through [MutableSharedFlow].
  *
  * @property accountRepository Repository for fetching account data.
  * @property sharedPreferences SharedPreferences for storing user data.
@@ -24,14 +28,12 @@ import java.net.UnknownHostException
 class AccountViewModel(
     private val accountRepository: AccountRepository,
     private val sharedPreferences: SharedPreferences,
-    private val shouldSaveToSharedPreferences: Boolean = true
 ) : ViewModel() {
 
     companion object {
         private const val KEY_USER_IDENTIFIER = "userIdentifier"
         private const val KEY_MAIN_ACCOUNT_BALANCE = "mainAccountBalance"
     }
-
 
     // Event to trigger navigation to TransferFragment
     private val _navigateToTransferEvent = MutableSharedFlow<Unit>()
@@ -107,6 +109,7 @@ class AccountViewModel(
                     AccountState.Error("No Internet connection. Please check your connection.")
             } catch (e: Exception) {
                 // Handle other types of errors
+                println("Exception: ${e.message}")
                 _state.value = AccountState.Error("An error occurred. Please try again.")
             }
         }
@@ -127,8 +130,9 @@ class AccountViewModel(
     }
 
     /**
-     * Function to navigate to the user's account screen.
-     * Triggers the navigation event to UserAccountFragment.
+     * Function to navigate to the TransferFragment.
+     *
+     * Triggers the navigation event to TransferFragment via [navigateToTransferEvent].
      */
     fun navigateToTransfer() {
         // Emitting the navigation event to navigate to TransferFragment
@@ -166,10 +170,8 @@ class AccountViewModel(
             200 -> if (mainAccountBalance != null) {
                 _state.value = AccountState.Success(mainAccountBalance)
                 // Store main account balance in SharedPreferences
-                if (shouldSaveToSharedPreferences) {
-                    sharedPreferences.edit()
-                        .putFloat(KEY_MAIN_ACCOUNT_BALANCE, mainAccountBalance.toFloat()).apply()
-                }
+                sharedPreferences.edit()
+                    .putFloat(KEY_MAIN_ACCOUNT_BALANCE, mainAccountBalance.toFloat()).apply()
             } else {
                 _state.value = AccountState.Error("Main account not found.")
             }

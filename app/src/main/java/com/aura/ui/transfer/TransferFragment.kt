@@ -35,6 +35,13 @@ class TransferFragment : Fragment() {
      */
     private val viewModel: TransferViewModel by viewModel()
 
+    /**
+     * Creates and returns the view hierarchy associated with this fragment.
+     * @param inflater The LayoutInflater object that can be used to inflate any views in the fragment.
+     * @param container If non-null, this is the parent view that the fragment's UI should be attached to.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state as given here.
+     * @return The View for the fragment's UI, or null.
+     */
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -43,6 +50,11 @@ class TransferFragment : Fragment() {
         return binding.root
     }
 
+    /**
+     * Called when the fragment's activity has been created and the fragment's view hierarchy instantiated.
+     * @param view The View returned by [onCreateView].
+     * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state as given here.
+     */
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -117,6 +129,9 @@ class TransferFragment : Fragment() {
         }
     }
 
+    /**
+     * Called when the view previously created by onCreateView() has been detached from the fragment.
+     */
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

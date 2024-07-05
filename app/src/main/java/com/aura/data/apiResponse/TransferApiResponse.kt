@@ -11,13 +11,13 @@ import com.squareup.moshi.JsonClass
  */
 @JsonClass(generateAdapter = true)
 data class TransferApiResponse(
-    @Json(name = "result") val apiResponseBody: Boolean,
+    @Json(name = "result") val apiResponseBody: Boolean
 ) {
     /**
      * Converts this TransferApiResponse object to a TransferResultModel object.
      *
      * @param apiResponseStatusCode The HTTP status code of the response.
-     * @return TransferResultModel object.
+     * @return TransferResultModel object representing the transfer result.
      */
     fun toDomainModel(apiResponseStatusCode: Int): TransferResultModel {
         return TransferResultModel(apiResponseBody, apiResponseStatusCode)

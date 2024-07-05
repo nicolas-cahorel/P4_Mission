@@ -134,7 +134,6 @@ class AccountFragment : Fragment() {
      * @param menu The options menu in which you place your items.
      * @param inflater The MenuInflater object that can be used to inflate any views in the fragment.
      */
-
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.home_menu, menu)
         super.onCreateOptionsMenu(menu, inflater)

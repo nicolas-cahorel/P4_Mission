@@ -22,6 +22,10 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 /**
  * Fragment responsible for handling user login.
+ *
+ * This fragment manages the UI for user login, including handling user input for
+ * identifier and password, observing login state changes from [LoginViewModel],
+ * and navigating to the account screen upon successful login.
  */
 class LoginFragment : Fragment() {
 
@@ -36,6 +40,7 @@ class LoginFragment : Fragment() {
 
     /**
      * Creates and returns the view hierarchy associated with this fragment.
+     *
      * @param inflater The LayoutInflater object that can be used to inflate any views in the fragment.
      * @param container If non-null, this is the parent view that the fragment's UI should be attached to.
      * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state as given here.
@@ -52,6 +57,7 @@ class LoginFragment : Fragment() {
 
     /**
      * Called when the fragment's activity has been created and the fragment's view hierarchy instantiated.
+     *
      * @param view The View returned by [onCreateView].
      * @param savedInstanceState If non-null, this fragment is being re-constructed from a previous saved state as given here.
      */
