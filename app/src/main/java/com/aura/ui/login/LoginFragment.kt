@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -27,7 +26,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
  * identifier and password, observing login state changes from [LoginViewModel],
  * and navigating to the account screen upon successful login.
  */
-class LoginFragment : Fragment() {
+class LoginFragment : androidx.fragment.app.Fragment() {
 
     /**
      * The binding for the login layout.

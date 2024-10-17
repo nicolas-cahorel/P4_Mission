@@ -13,5 +13,5 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "aura"
+rootProject.name = "P4_aura"
 include(":app")

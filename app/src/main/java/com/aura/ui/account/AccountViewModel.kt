@@ -27,7 +27,7 @@ import java.net.UnknownHostException
  */
 class AccountViewModel(
     private val accountRepository: AccountRepository,
-    private val sharedPreferences: SharedPreferences,
+    private val sharedPreferences: SharedPreferences
 ) : ViewModel() {
 
     companion object {

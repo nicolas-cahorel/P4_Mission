@@ -123,6 +123,7 @@ class TransferFragment : Fragment() {
                             Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT)
                                 .show()
                         }
+
                     }
                 }
             }

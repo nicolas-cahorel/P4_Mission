@@ -33,7 +33,7 @@ class LoginViewModel(
 
     // Event to trigger navigation to AccountFragment
     private val _navigateToAccountEvent = MutableSharedFlow<Unit>()
-    val navigateToAccountEvent: SharedFlow<Unit> get() = _navigateToAccountEvent
+    val     navigateToAccountEvent: SharedFlow<Unit> get() = _navigateToAccountEvent
 
     // MutableStateFlow representing the state
     private val _state = MutableStateFlow<LoginState>(LoginState.Initial)

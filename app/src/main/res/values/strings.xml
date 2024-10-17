@@ -1,5 +1,5 @@
 <resources>
-  <string name="app_name">Aura</string>
+  <string name="app_name">P4_Aura</string>
 
   <string name="prompt_identifier">Identifiant</string>
   <string name="prompt_password">Mot de passe</string>
